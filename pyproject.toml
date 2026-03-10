@@ -1,0 +1,24 @@
+[project]
+name = "fpgactrlsys-electest"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "dasdias", email = "das.dias6@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "cocotb>=2.0.1",
+    "numpy>=2.2.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pylint>=4.0.5",
+    "pytest>=9.0.2",
+    "ruff>=0.15.5",
+]
