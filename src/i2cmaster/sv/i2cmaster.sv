@@ -26,7 +26,7 @@ module i2cmaster #(
     always_ff @ (negedge clk) begin
         clk_en = busy;
     end
-
+    // TODO: in case of glitches in the LSB transmission, need to register-buffer the SDA output.
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             shift_reg  <= '0;
