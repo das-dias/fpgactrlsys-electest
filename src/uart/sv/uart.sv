@@ -1,53 +1,46 @@
-module i2cmaster #(
-    parameter int WIDTH = 8
-)(
-    input  logic                clk,     // Rising edge read-enable to shift out data
-    input  logic                rst_n,  // Active-low reset 
-    input  logic                write,  // Active-high write for loading parallel data
-    input  logic [WIDTH-1:0]    d_in,   // Input parallel data
-    output logic                busy,   // Active-high flag signaling shifting is currently ongoing
-    
-    output reg                i2c_cse_n,  // Active-low flag enabling the slave i2c interface
-    output reg                i2c_sda,    // Output serial data
-    output reg                i2c_scl     // Output slave-driver clock
-);
+//`include "uart_tx.sv"
+//`include "uart_rx.sv"
 
-    localparam int MAX_VAL = WIDTH - 1;
-    localparam int ADDR_W  = $clog2(WIDTH);
+module uart #(parameter
+    DATA_WIDTH = 8,
+    BAUD_RATE  = 115200,
+    CLK_FREQ   = 100_000_000
+    )(
+        //rx
+        input   logic               s_in,
+        input   logic               rx_ready,
+        output  logic [DATA_WIDTH-1:0]   d_out,
+        output  logic               rx_valid,
 
-    reg [WIDTH-1:0]                 shift_reg;
-    reg [$clog2(WIDTH)-1:0]         bit_cnt;
-    logic                           clk_en;
+        //tx
+        output  logic               s_out,
+        input   logic [DATA_WIDTH-1:0]   d_in,
+        input   logic               tx_valid,
+        output  logic               tx_ready,
+        
+        input logic                 clk,
+        input logic                 rst_n
+    );
 
-    // Clock gating to output
+    uart_tx #(DATA_WIDTH, BAUD_RATE, CLK_FREQ)
+    uart_tx_inst(
+        .s_out(s_out),
+        .d_in(d_in),
+        .valid(tx_valid),
+        .ready(tx_ready),
 
-    assign busy         = (bit_cnt > 0);
+        .clk(clk),
+        .rst_n(rst_n)
+    );
 
-    always_ff @ (negedge clk) begin
-        clk_en = busy;
-    end
-    // TODO: in case of glitches in the LSB transmission, need to register-buffer the SDA output.
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            shift_reg  <= '0;
-            bit_cnt    <= '0;
-        end
-        else if (write) begin
-            shift_reg   <= d_in;
-            bit_cnt     <= MAX_VAL[ADDR_W-1:0];
-        end
-        else if (bit_cnt > 0) begin
-            shift_reg  <= shift_reg << 1;
-            bit_cnt    <= bit_cnt - 1'b1;
-            
-        end
-    end
+    uart_rx #(DATA_WIDTH, BAUD_RATE, CLK_FREQ)
+    uart_rx_inst(
+        .d_out(d_out),
+        .s_in(s_in),
+        .valid(rx_valid),
+        .ready(rx_ready),
 
-
-
-    assign i2c_sda      = shift_reg[WIDTH-1];             // MSB first
-    assign i2c_cse_n    = (bit_cnt == 0);            // last bit cycle
-
-    assign i2c_scl      = clk_en & !clk;
-
+        .clk(clk),
+        .rst_n(rst_n)
+    );
 endmodule

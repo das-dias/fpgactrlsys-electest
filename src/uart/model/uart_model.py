@@ -12,7 +12,19 @@ def dec2bin(x: int, width: int = 8) -> list[int]:
         res = [0]*(width-lres) + res
     return res
 
-def i2cmaster_model(prev_state: int, cntr: int, rst_n: int, write: int, d_in: int = 0, width: int = 8) -> tuple[int, int, int]:
+def uart_rx_model(prev_state: int, cntr: int, rst_n: int, write: int, d_in: int = 0, width: int = 8) -> tuple[int, int, int]:
+    if not rst_n:
+        prev_state = 0
+        return 0, prev_state, 0
+    if write:
+        cntr = width-1
+        return dec2bin(d_in, width=width)[0], d_in, cntr
+    curr_state = dec2bin(prev_state, width=width)
+    if cntr>0:
+        curr_state = curr_state[1:] + [0]
+    return curr_state[0], bin2dec(curr_state), cntr-1 # MSB first
+
+def uart_tx_model(prev_state: int, cntr: int, rst_n: int, write: int, d_in: int = 0, width: int = 8) -> tuple[int, int, int]:
     if not rst_n:
         prev_state = 0
         return 0, prev_state, 0

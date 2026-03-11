@@ -13,6 +13,8 @@ TOPLEVEL_LANG ?= verilog
 
 EXTRA_ARGS += --coverage --trace --trace-fst --trace-structs
 
+VERILOG_SOURCES += $(HDLDIR)/uart_tx.sv
+VERILOG_SOURCES += $(HDLDIR)/uart_rx.sv
 VERILOG_SOURCES += $(HDLDIR)/uart.sv
 
 # TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file
