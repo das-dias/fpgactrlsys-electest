@@ -18,6 +18,7 @@ The actual RTL, associated `python-cocotb`-based testbenches, and test-generated
 The RTL testing outputs are not version-controlled with this repository. To generate, tests have to be re-run. For now, to test each sub-system individually, navigate to the intended subblock's testing directory, and run the `Makefile` script located in each `tests` sub-directory of the block.
 
 **Example**:
+
 Navigate from this repo's root:
 ```shell
 cd src/i2cmaster/tests
