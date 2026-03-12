@@ -3,8 +3,8 @@ module pwm
 #(
   parameter CLK_FREQ = 100_000_000,
   parameter PWM_FREQ = 20_000,
-  parameter MAX_DUTY_CYCLE_CNTR_VAL = $clog2(CLK_FREQ/PWM_FREQ)
-  localparam PWM_MAX_CNT = int'(CLK_FREQ/PWM_FREQ);
+  parameter MAX_DUTY_CYCLE_CNTR_VAL = $clog2(CLK_FREQ/PWM_FREQ),
+  localparam PWM_MAX_CNT = int'(CLK_FREQ/PWM_FREQ)
 )
 (
   input  wire           rst_n,  // Active low reset
