@@ -4,7 +4,7 @@
 
 ---
 
-This is the fully open-source path, and it works well on macOS.
+This is the fully open-source path, currently recommended by the [F4PGA (Chip's Alliance) Inniciative](https://f4pga.org/), and it works well on macOS.
 
 ### Synthesis: **Yosys**
 The de facto open-source synthesis tool. Takes Verilog (or VHDL via the GHDL plugin) and produces a netlist. Install via Homebrew: `brew install yosys`.
