@@ -19,7 +19,6 @@ module uart_rx #(
 
         output  logic [DATA_WIDTH-1:0] d_out,
         output  logic valid
-        
     );
     //-----------------------------------------------------------------------------
     // noise removing filter

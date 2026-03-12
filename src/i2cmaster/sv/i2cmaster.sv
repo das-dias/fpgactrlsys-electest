@@ -17,15 +17,15 @@ module i2cmaster #(
 
     reg [WIDTH-1:0]                 shift_reg;
     reg [$clog2(WIDTH)-1:0]         bit_cnt;
-    logic                           clk_en;
+    logic                           clk_en_latch;
 
     // Clock gating to output
-
     assign busy         = (bit_cnt > 0);
-
-    always_ff @ (negedge clk) begin
-        clk_en = busy;
+    always_ff @(negedge clk or posedge busy) begin
+        clk_en_latch = busy;
     end
+    assign i2c_scl = clk_en_latch & clk;
+
     // TODO: in case of glitches in the LSB transmission, need to register-buffer the SDA output.
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -47,7 +47,5 @@ module i2cmaster #(
 
     assign i2c_sda      = shift_reg[WIDTH-1];             // MSB first
     assign i2c_cse_n    = (bit_cnt == 0);            // last bit cycle
-
-    assign i2c_scl      = clk_en & !clk;
 
 endmodule
