@@ -1,6 +1,6 @@
 `default_nettype none
 module arty_s7_hello_world_toplevel #(
-    parameter CLK_FREQ = 100_000_000,
+    parameter CLK_FREQ = 12_000_000,
 
     localparam RLED_PWM_FREQ = 5_000,
     localparam RLED_PWM_DCYCLE = int'(0.15*CLK_FREQ/RLED_PWM_FREQ),
@@ -37,7 +37,7 @@ module arty_s7_hello_world_toplevel #(
     logic o_clk_en_latch;
 
 
-    // put clock wizard here
+    // TODO: put clock wizard here
 
 
     // clock gating:
