@@ -2,8 +2,9 @@ module fsm #(
     parameter
         DATA_WIDTH = 8,
         //BAUD_RATE           = 115200,
-        CLK_FREQ            = 400_000_000
-        SAMPL_CLK_FREQ      = 100_000_000,
+        CLK_FREQ            = 400_000_000,
+        SAMPL_CLK_FREQ      = 50_000_000,
+        DAT_READ_CLK_FREQ   = 25_000_000,
         INTERFACE_CLK_FREQ  = 100_000_000,
         PRBS_DRV_CLK_FREQ   = 50_000_000
 

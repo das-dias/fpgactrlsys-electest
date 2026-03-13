@@ -1,6 +1,6 @@
 `default_nettype none
 module arty_s7_hello_world_toplevel #(
-    parameter CLK_FREQ = 12_000_000,
+    parameter CLK_FREQ = 100_000_000,
 
     localparam RLED_PWM_FREQ = 5_000,
     localparam RLED_PWM_DCYCLE = int'(0.15*CLK_FREQ/RLED_PWM_FREQ),
@@ -10,7 +10,7 @@ module arty_s7_hello_world_toplevel #(
     localparam BLED_PWM_DCYCLE = int'(0.05*CLK_FREQ/BLED_PWM_FREQ)
 )(
     input  wire        rst_n,  // reset, active low (top right, red button)
-    input  wire        clk,  // 12 MHz, ~83.33ns
+    input  wire        clk_100mhz,  // 100 MHz, ~10.00ns
 
     input  wire        drvr_clk,
     
@@ -35,6 +35,11 @@ module arty_s7_hello_world_toplevel #(
     logic bled_pwm;
 
     logic o_clk_en_latch;
+
+
+    // put clock wizard here
+
+
     // clock gating:
     always_ff @(negedge clk) begin
         o_clk_en_latch <= sw[0] ? '1 : '0;
