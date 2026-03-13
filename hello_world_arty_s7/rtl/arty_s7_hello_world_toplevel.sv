@@ -11,8 +11,6 @@ module arty_s7_hello_world_toplevel #(
 )(
     input  wire        rst_n,  // reset, active low (top right, red button)
     input  wire        clk_12mhz,  // 12 MHz, ~10.00ns
-
-    input  wire        drvr_clk,
     
     input  wire  [3:0] sw,  // Switches
     input  wire  [3:0] btn, // buttons
@@ -25,7 +23,7 @@ module arty_s7_hello_world_toplevel #(
     output logic       led1_g,
     output logic       led1_b,
 
-    output logic [7:0] ja,
+    output logic [7:0] ja
 );
     
     logic [23:0] rled_cnt = '0;  // 1s -> 12e6 -> log2(): 24bits
@@ -41,13 +39,13 @@ module arty_s7_hello_world_toplevel #(
 
 
     // clock gating:
-    always_ff @(negedge clk) begin
+    always_ff @(negedge clk_12mhz) begin
         o_clk_en_latch <= sw[0] ? '1 : '0;
     end
-    assign ja[0] = o_clk_en_latch & clk;
+    assign ja[0] = o_clk_en_latch & clk_12mhz;
 
     
-    always_ff @( posedge clk or negedge rst_n ) begin : rled_cnt_proc
+    always_ff @( posedge clk_12mhz or negedge rst_n ) begin : rled_cnt_proc
         if (!rst_n) begin
             rled_cnt  <= '0;
             led       <= '0;
@@ -65,7 +63,7 @@ module arty_s7_hello_world_toplevel #(
     )
     rled_pwm_inst
     (
-        .clk(clk),
+        .clk(clk_12mhz),
         .rst_n(rst_n),
         .i_duty_cycle(RLED_PWM_DCYCLE),
         .o_pwm(rled_pwm)
@@ -81,7 +79,7 @@ module arty_s7_hello_world_toplevel #(
     )
     gled_pwm_inst
     (
-        .clk(clk),
+        .clk(clk_12mhz),
         .rst_n(rst_n),
         .i_duty_cycle(GLED_PWM_DCYCLE),
         .o_pwm(gled_pwm)
@@ -97,7 +95,7 @@ module arty_s7_hello_world_toplevel #(
     )
     bled_pwm_inst
     (
-        .clk(clk),
+        .clk(clk_12mhz),
         .rst_n(rst_n),
         .i_duty_cycle(BLED_PWM_DCYCLE),
         .o_pwm(bled_pwm)
