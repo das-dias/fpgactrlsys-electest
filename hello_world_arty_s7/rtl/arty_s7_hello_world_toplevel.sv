@@ -10,7 +10,7 @@ module arty_s7_hello_world_toplevel #(
     localparam BLED_PWM_DCYCLE = int'(0.05*CLK_FREQ/BLED_PWM_FREQ)
 )(
     input  wire        rst_n,  // reset, active low (top right, red button)
-    input  wire        clk_100mhz,  // 100 MHz, ~10.00ns
+    input  wire        clk_12mhz,  // 12 MHz, ~10.00ns
 
     input  wire        drvr_clk,
     
@@ -25,7 +25,7 @@ module arty_s7_hello_world_toplevel #(
     output logic       led1_g,
     output logic       led1_b,
 
-    output wire        o_gated_clk
+    output logic [7:0] ja,
 );
     
     logic [23:0] rled_cnt = '0;  // 1s -> 12e6 -> log2(): 24bits
@@ -44,7 +44,7 @@ module arty_s7_hello_world_toplevel #(
     always_ff @(negedge clk) begin
         o_clk_en_latch <= sw[0] ? '1 : '0;
     end
-    assign o_gated_clk = o_clk_en_latch & clk;
+    assign ja[0] = o_clk_en_latch & clk;
 
     
     always_ff @( posedge clk or negedge rst_n ) begin : rled_cnt_proc

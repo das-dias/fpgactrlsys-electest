@@ -4,10 +4,10 @@
 ## - rename the used ports (in each line, after get_ports) according to the top level signal names in the project
 
 ## Clock Signals
-#set_property -dict { PACKAGE_PIN F14   IOSTANDARD LVCMOS33 } [get_ports { clk_12mhz }]; #IO_L13P_T2_MRCC_15 Sch=uclk
-#create_clock -add -name sys_clk_pin -period 83.333 -waveform {0 41.667} [get_ports { clk }];
-set_property -dict { PACKAGE_PIN R2    IOSTANDARD SSTL135 } [get_ports { clk_100mhz }]; #IO_L12P_T1_MRCC_34 Sch=ddr3_clk[200]
-create_clock -add -name sys_clk_pin -period 10.000 -waveform {0 5.000}  [get_ports { clk100mhz }];
+set_property -dict { PACKAGE_PIN F14   IOSTANDARD LVCMOS33 } [get_ports { clk_12mhz }]; #IO_L13P_T2_MRCC_15 Sch=uclk
+create_clock -add -name sys_clk_pin -period 83.333 -waveform {0 41.667} [get_ports { clk_12mhz }];
+#set_property -dict { PACKAGE_PIN R2    IOSTANDARD SSTL135 } [get_ports { clk_100mhz }]; #IO_L12P_T1_MRCC_34 Sch=ddr3_clk[200]
+#create_clock -add -name sys_clk_pin -period 10.000 -waveform {0 5.000}  [get_ports { clk_100mhz }];
 
 ## Switches
 set_property -dict { PACKAGE_PIN H14   IOSTANDARD LVCMOS33 } [get_ports { sw[0] }]; #IO_L20N_T3_A19_15 Sch=sw[0]
@@ -36,8 +36,7 @@ set_property -dict { PACKAGE_PIN J16   IOSTANDARD LVCMOS33 } [get_ports { btn[2]
 set_property -dict { PACKAGE_PIN H13   IOSTANDARD LVCMOS33 } [get_ports { btn[3] }]; #IO_L20P_T3_A20_15 Sch=btn[3]
 
 ## Pmod Header JA
-set_property -dict { PACKAGE_PIN L17   IOSTANDARD LVCMOS33 } [get_ports { o_gated_clk }]; #IO_L4P_T0_D04_14 Sch=ja_p[1]
-#set_property -dict { PACKAGE_PIN L17   IOSTANDARD LVCMOS33 } [get_ports { ja[0] }]; #IO_L4P_T0_D04_14 Sch=ja_p[1]
+set_property -dict { PACKAGE_PIN L17   IOSTANDARD LVCMOS33 } [get_ports { ja[0] }]; #IO_L4P_T0_D04_14 Sch=ja_p[1]
 #set_property -dict { PACKAGE_PIN L18   IOSTANDARD LVCMOS33 } [get_ports { ja[1] }]; #IO_L4N_T0_D05_14 Sch=ja_n[1]
 #set_property -dict { PACKAGE_PIN M14   IOSTANDARD LVCMOS33 } [get_ports { ja[2] }]; #IO_L5P_T0_D06_14 Sch=ja_p[2]
 #set_property -dict { PACKAGE_PIN N14   IOSTANDARD LVCMOS33 } [get_ports { ja[3] }]; #IO_L5N_T0_D07_14 Sch=ja_n[2]
