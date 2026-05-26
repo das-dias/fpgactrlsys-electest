@@ -70,7 +70,7 @@ module uart_rx #(
     typedef enum logic [1:0] {
         STT_DATA,
         STT_STOP,
-        STT_WAIT
+        STT_IDLE
     } statetype;
     
     statetype                state;
@@ -82,7 +82,7 @@ module uart_rx #(
 
     always_ff @(posedge clk) begin
         if(!rst_n) begin
-            state      <= STT_WAIT;
+            state      <= STT_IDLE;
             data_tmp_r <= 0;
             data_cnt   <= 0;
             clk_cnt    <= 0;
@@ -113,20 +113,20 @@ module uart_rx #(
             //-----------------------------------------------------------------------------
             // state      : STT_STOP
             // behavior   : watch stop bit
-            // next state : STT_WAIT
+            // next state : STT_IDLE
             STT_STOP: begin
                 if(0 < clk_cnt) begin
                     clk_cnt <= clk_cnt - 1;
                 end else if(sig_r) begin
-                    state <= STT_WAIT;
+                    state <= STT_IDLE;
                 end
             end
 
             //-----------------------------------------------------------------------------
-            // state      : STT_WAIT
+            // state      : STT_IDLE
             // behavior   : watch start bit
             // next state : when start bit is observed -> STT_DATA
-            STT_WAIT: begin
+            STT_IDLE: begin
                 if(sig_r == 0) begin
                     clk_cnt  <= PULSE_WIDTH[LB_PULSE_WIDTH:0] + HALF_PULSE_WIDTH[LB_PULSE_WIDTH:0];
                     data_cnt <= 0;
@@ -135,7 +135,7 @@ module uart_rx #(
             end
 
             default: begin
-                state <= STT_WAIT;
+                state <= STT_IDLE;
             end
             endcase
         end
