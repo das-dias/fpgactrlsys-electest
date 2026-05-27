@@ -4,7 +4,7 @@
 
 ## ================================================================
 ## CLOCK
-## 12 MHz onboard oscillator
+## 100 MHz onboard oscillator
 ## ================================================================
 
 set_property -dict { PACKAGE_PIN F14 IOSTANDARD LVCMOS33 } [get_ports { clk }]
@@ -47,12 +47,12 @@ set_property -dict { PACKAGE_PIN F13 IOSTANDARD LVCMOS33 } [get_ports { experime
 ## RXSTATE
 set_property -dict { PACKAGE_PIN E13 IOSTANDARD LVCMOS33 } [get_ports { rxstate }]
 
-## RXTXB
-set_property -dict { PACKAGE_PIN H15 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]
-
 ## ================================================================
 ## PMOD JA
 ## ================================================================
+
+## JA5 -> RXTXB
+set_property -dict { PACKAGE_PIN M17 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]
 
 ## JA0 -> PRBS CROSS OUTPUT
 set_property -dict { PACKAGE_PIN L17 IOSTANDARD LVCMOS33 } [get_ports { prbs_cross_out }]
