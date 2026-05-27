@@ -2,11 +2,12 @@ module us_programmable_counter #(
     parameter int COUNTER_WIDTH = 8
 )(
     input  logic                         clk,       // 100 MHz clock
-    input  logic                         rst_n,
+    input  logic                         rstb,
 
     input  logic                         enable,
     input  logic                         clear,
 
+    input  logic                         we,
     input  logic [COUNTER_WIDTH-1:0]     max_value,
 
     output logic [COUNTER_WIDTH-1:0]     count,
@@ -19,8 +20,8 @@ module us_programmable_counter #(
     logic [6:0] us_divider; // needs to count 0..99
     logic       us_tick;
 
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb) begin
             us_divider <= 0;
             us_tick    <= 1'b0;
         end
@@ -37,8 +38,8 @@ module us_programmable_counter #(
     end
 
     // Programmable counter
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb) begin
             count    <= 0;
             max_flag <= 1'b0;
         end

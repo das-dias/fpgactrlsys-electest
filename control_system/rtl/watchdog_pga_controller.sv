@@ -1,9 +1,11 @@
 module watchdog_pga_controller (
 
     input  logic       clk,
-    input  logic       rst_n,
+    input  logic       rstb,
+    input  logic       enb,
 
-    // Watchdog timeout in microseconds
+    // Watchdog programming interface
+    input  logic       we,
     input  logic [7:0] watchdog_max,
 
     // I2C interface
@@ -12,35 +14,21 @@ module watchdog_pga_controller (
     output logic       i2c_scl
 );
 
-/*
-* 1. Program watchdog timer span from input parallel 8 bit
-* 2. Each time watchdog reaches max, increment PGA state
-* 3. Serialize it to the output through the I2C master
-* 4. Reset watchdog timer
-*/
+    // ============================================================
+    // Internal watchdog register
+    // ============================================================
 
-/* Controller Architecture:
-+-----------------------------+
-| watchdog_controller         |
-|                             |
-|  +----------------------+   |
-|  | us_programmable_     |   |
-|  | counter              |--- watchdog_expired
-|  +----------------------+   |
-|                             |
-|  +----------------------+   |
-|  | PGA state register   |   |
-|  +----------------------+   |
-|                             |
-|  +----------------------+   |
-|  | I2C FSM              |--- i2c_start
-|  +----------------------+   |
-|                             |
-|  +----------------------+   |
-|  | i2cmaster            |--- SDA/SCL, while 'busy' is HIGH
-|  +----------------------+   |
-+-----------------------------+
-*/
+    logic [7:0] watchdog_max_reg;
+
+    always_ff @(posedge clk or negedge rstb) begin
+
+        if (!rstb)
+            watchdog_max_reg <= 8'd0;
+
+        else if (we)
+            watchdog_max_reg <= watchdog_max;
+
+    end
 
     // ============================================================
     // Watchdog signals
@@ -63,8 +51,8 @@ module watchdog_pga_controller (
     // I2C serializer signals
     // ============================================================
 
-    logic       i2c_write;
-    logic       i2c_busy;
+    logic i2c_write;
+    logic i2c_busy;
 
     // ============================================================
     // Watchdog counter
@@ -74,11 +62,16 @@ module watchdog_pga_controller (
         .COUNTER_WIDTH(8)
     ) watchdog_counter (
         .clk       (clk),
-        .rst_n     (rst_n),
-        .enable    (1'b1),
+        .rst_n     (rstb),
+
+        .enable    (!enb),
+
         .clear     (watchdog_clear),
-        .max_value (watchdog_max),
+
+        .max_value (watchdog_max_reg),
+
         .count     (watchdog_count),
+
         .max_flag  (watchdog_expired)
     );
 
@@ -90,9 +83,10 @@ module watchdog_pga_controller (
         .WIDTH(8)
     ) i2c0 (
         .clk       (clk),
-        .rst_n     (rst_n),
+        .rst_n     (rstb),
 
         .write     (i2c_write),
+
         .d_in      (i2c_data),
 
         .busy      (i2c_busy),
@@ -103,8 +97,7 @@ module watchdog_pga_controller (
     );
 
     // ============================================================
-    // PGA next-state logic
-    // Sequence:
+    // PGA sequence
     // 000 -> 001 -> 010 -> 011 -> 111 -> 000
     // ============================================================
 
@@ -123,7 +116,7 @@ module watchdog_pga_controller (
     end
 
     // ============================================================
-    // Controller FSM
+    // FSM
     // ============================================================
 
     typedef enum logic [1:0] {
@@ -135,84 +128,102 @@ module watchdog_pga_controller (
 
     state_t state;
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk or negedge rstb) begin
 
-        if (!rst_n) begin
+        if (!rstb) begin
 
-            state           <= WAIT_TIMEOUT;
+            state <= WAIT_TIMEOUT;
 
-            pga_state       <= 3'b000;
+            pga_state <= 3'b000;
 
-            i2c_data        <= 8'h00;
+            i2c_data <= 8'h00;
 
-            i2c_write       <= 1'b0;
-            watchdog_clear  <= 1'b0;
+            i2c_write <= 1'b0;
+
+            watchdog_clear <= 1'b1;
 
         end
         else begin
 
-            // Default pulse signals
-            i2c_write      <= 1'b0;
+            // defaults
+            i2c_write <= 1'b0;
+
             watchdog_clear <= 1'b0;
 
-            case (state)
+            // inactive
+            if (enb) begin
 
-                // ================================================
-                // Wait for watchdog expiration
-                // ================================================
-                WAIT_TIMEOUT: begin
+                state <= WAIT_TIMEOUT;
 
-                    if (watchdog_expired) begin
+                pga_state <= 3'b000;
 
-                        // Advance PGA state
-                        pga_state <= pga_next;
+                i2c_data <= 8'h00;
 
-                        // Pack 3-bit PGA word into byte
-                        i2c_data <= {5'b00000, pga_next};
+                watchdog_clear <= 1'b1;
 
-                        state <= START_I2C;
+            end
+            else begin
+
+                case (state)
+
+                    // ============================================
+                    // Wait for watchdog expiration
+                    // ============================================
+                    WAIT_TIMEOUT: begin
+
+                        if (watchdog_expired) begin
+
+                            pga_state <= pga_next;
+
+                            i2c_data <= {
+                                5'b00000,
+                                pga_next
+                            };
+
+                            state <= START_I2C;
+                        end
                     end
-                end
 
-                // ================================================
-                // Pulse serializer write
-                // ================================================
-                START_I2C: begin
+                    // ============================================
+                    // Start serializer
+                    // ============================================
+                    START_I2C: begin
 
-                    i2c_write <= 1'b1;
+                        i2c_write <= 1'b1;
 
-                    state <= WAIT_BUSY_HIGH;
-                end
-
-                // ================================================
-                // Wait until serializer becomes busy
-                // ================================================
-                WAIT_BUSY_HIGH: begin
-
-                    if (i2c_busy) begin
-                        state <= WAIT_BUSY_LOW;
+                        state <= WAIT_BUSY_HIGH;
                     end
-                end
 
-                // ================================================
-                // Wait until serialization completes
-                // ================================================
-                WAIT_BUSY_LOW: begin
+                    // ============================================
+                    // Wait busy asserted
+                    // ============================================
+                    WAIT_BUSY_HIGH: begin
 
-                    if (!i2c_busy) begin
+                        if (i2c_busy)
+                            state <= WAIT_BUSY_LOW;
 
-                        // Reset watchdog timer
-                        watchdog_clear <= 1'b1;
+                    end
 
+                    // ============================================
+                    // Wait serialization complete
+                    // ============================================
+                    WAIT_BUSY_LOW: begin
+
+                        if (!i2c_busy) begin
+
+                            watchdog_clear <= 1'b1;
+
+                            state <= WAIT_TIMEOUT;
+
+                        end
+                    end
+
+                    default: begin
                         state <= WAIT_TIMEOUT;
                     end
-                end
 
-                default: begin
-                    state <= WAIT_TIMEOUT;
-                end
-
-            endcase
+                endcase
+            end
         end
     end
 

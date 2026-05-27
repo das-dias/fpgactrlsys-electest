@@ -15,13 +15,15 @@
 module rx_tx_cycle_controller (
 
     input  logic         clk,        // 100 MHz system clock
-    input  logic         rst_n,      // FPGA reset (active low)
+    input  logic         rstb,      // FPGA reset (active low)
 
     input  logic         enb,        // Active-low experiment enable
 
     input  logic         testen_toggle_sw,
     input  logic         afeen_toggle_sw,
 
+    input  logic        we_experiment_duration,
+    input  logic        we_toggle_period,
     input  logic [7:0]  experiment_duration_us,
     input  logic [7:0]  toggle_period_us,
 
@@ -43,8 +45,8 @@ module rx_tx_cycle_controller (
 
     logic clk50_en;
 
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb)
             clk50_en <= 1'b0;
         else
             clk50_en <= ~clk50_en;
@@ -56,8 +58,8 @@ module rx_tx_cycle_controller (
 
     logic enb_d;
 
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb)
             enb_d <= 1'b1;
         else
             enb_d <= enb;
@@ -79,7 +81,7 @@ module rx_tx_cycle_controller (
         .COUNTER_WIDTH(8)
     ) experiment_timer (
         .clk       (clk),
-        .rst_n     (rst_n),
+        .rstb     (rstb),
         .enable    (experiment_ongoing),
         .clear     (exp_clear),
         .max_value (experiment_duration_us),
@@ -98,7 +100,7 @@ module rx_tx_cycle_controller (
         .COUNTER_WIDTH(8)
     ) toggle_timer (
         .clk       (clk),
-        .rst_n     (rst_n),
+        .rstb     (rstb),
         .enable    (experiment_ongoing),
         .clear     (toggle_clear),
         .max_value (toggle_period_us),
@@ -126,9 +128,9 @@ module rx_tx_cycle_controller (
     // Runs only at 50 MHz update rate
     // ============================================================
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk or negedge rstb) begin
 
-        if (!rst_n) begin
+        if (!rstb) begin
 
             state <= IDLE;
 

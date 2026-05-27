@@ -1,13 +1,12 @@
 module adc_fifo_cache #(
     parameter int DATA_WIDTH = 8,
     parameter int DEPTH = 256,
-
     //localparam int MAX_DATA_VAL = DATA_WIDTH-1,
     localparam int ADDR_WIDTH   = $clog2(DEPTH)
     //localparam int MAX_ADDR_VAL = ADDR_WIDTH-1
 )(
     input  logic              clk,   // Rising-edge clock
-    input  logic              rst_n, // Active-low asynchronous reset
+    input  logic              rstb, // Active-low asynchronous reset
 
     input  logic              we,    // Active-high write-enable
     input  logic              re_n,    // Active-low read-enable
@@ -31,8 +30,8 @@ module adc_fifo_cache #(
     // tristate buffering of dout, to allow data to share same bus
     assign d_out = (re_n) ? {DATA_WIDTH{1'bz}} : dout_q;
 
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb) begin
             write_ptr   <= '0;
             read_ptr    <= '0;
             //size        <= '0;

@@ -2,7 +2,7 @@ module i2cmaster #(
     parameter int WIDTH = 8
 )(
     input  logic                clk,     // Rising edge read-enable to shift out data
-    input  logic                rst_n,  // Active-low reset 
+    input  logic                rstb,  // Active-low reset 
     input  logic                write,  // Active-high write for loading parallel data
     input  logic [WIDTH-1:0]    d_in,   // Input parallel data
     output logic                busy,   // Active-high flag signaling shifting is currently ongoing
@@ -27,8 +27,8 @@ module i2cmaster #(
     assign i2c_scl = clk_en_latch & clk;
 
     // TODO: in case of glitches in the LSB transmission, need to register-buffer the SDA output.
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb) begin
             shift_reg  <= '0;
             bit_cnt    <= '0;
         end
