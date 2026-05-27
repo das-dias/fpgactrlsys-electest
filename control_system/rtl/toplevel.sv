@@ -193,7 +193,7 @@ module toplevel (
         .enb    (experiment_enb),
 
         .clk    (clk),
-        .rst_n  (rstb),
+        .rstb  (rstb),
 
         .we     (prbs_lfsr_cross_we),
 
@@ -207,7 +207,7 @@ module toplevel (
         .enb    (experiment_enb),
 
         .clk    (clk),
-        .rst_n  (rstb),
+        .rstb  (rstb),
 
         .we     (prbs_lfsr_enable_we),
 
@@ -244,13 +244,15 @@ module toplevel (
     rx_tx_cycle_controller rx_tx0 (
 
         .clk                     (clk),
-        .rst_n                   (rstb),
+        .rstb                    (rstb),
 
         .enb                     (experiment_enb),
 
         .testen_toggle_sw        (testen_toggle_sw),
         .afeen_toggle_sw         (afeen_toggle_sw),
 
+        .we_toggle_period        (toggle_period_we),
+        .we_experiment_duration  (experiment_duration_we),
         .experiment_duration_us  (shared_data_bus),
         .toggle_period_us        (shared_data_bus),
 

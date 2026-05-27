@@ -21,8 +21,9 @@ module i2cmaster #(
 
     // Clock gating to output
     assign busy         = (bit_cnt > 0);
-    always_ff @(negedge clk or posedge busy) begin
-        clk_en_latch = busy;
+    always_latch begin
+        if (!clk)
+            clk_en_latch = busy;
     end
     assign i2c_scl = clk_en_latch & clk;
 

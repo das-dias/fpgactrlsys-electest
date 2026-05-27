@@ -84,9 +84,10 @@ module rx_tx_cycle_controller (
         .rstb     (rstb),
         .enable    (experiment_ongoing),
         .clear     (exp_clear),
+        .we       (we_experiment_duration),
         .max_value (experiment_duration_us),
         .count     (),
-        .max_flag  (exp_done)
+        .overflow_flag  (exp_done)
     );
 
     // ============================================================
@@ -103,9 +104,10 @@ module rx_tx_cycle_controller (
         .rstb     (rstb),
         .enable    (experiment_ongoing),
         .clear     (toggle_clear),
+        .we       (we_toggle_period),
         .max_value (toggle_period_us),
         .count     (),
-        .max_flag  (toggle_event)
+        .overflow_flag  (toggle_event)
     );
 
     // ============================================================

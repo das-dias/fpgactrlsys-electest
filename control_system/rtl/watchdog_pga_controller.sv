@@ -15,22 +15,6 @@ module watchdog_pga_controller (
 );
 
     // ============================================================
-    // Internal watchdog register
-    // ============================================================
-
-    logic [7:0] watchdog_max_reg;
-
-    always_ff @(posedge clk or negedge rstb) begin
-
-        if (!rstb)
-            watchdog_max_reg <= 8'd0;
-
-        else if (we)
-            watchdog_max_reg <= watchdog_max;
-
-    end
-
-    // ============================================================
     // Watchdog signals
     // ============================================================
 
@@ -61,18 +45,17 @@ module watchdog_pga_controller (
     us_programmable_counter #(
         .COUNTER_WIDTH(8)
     ) watchdog_counter (
-        .clk       (clk),
-        .rst_n     (rstb),
+        .clk        (clk),
+        .rstb      (rstb),
 
-        .enable    (!enb),
+        .enable     (!enb),
+        .clear      (watchdog_clear),
 
-        .clear     (watchdog_clear),
+        .we         (we),
+        .max_value  (watchdog_max),
 
-        .max_value (watchdog_max_reg),
-
-        .count     (watchdog_count),
-
-        .max_flag  (watchdog_expired)
+        .count      (watchdog_count),
+        .overflow_flag   (watchdog_expired)
     );
 
     // ============================================================
@@ -83,7 +66,7 @@ module watchdog_pga_controller (
         .WIDTH(8)
     ) i2c0 (
         .clk       (clk),
-        .rst_n     (rstb),
+        .rstb     (rstb),
 
         .write     (i2c_write),
 
