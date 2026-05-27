@@ -8,8 +8,12 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
+    "argparse>=1.4.0",
     "cocotb>=2.0.1",
     "numpy>=2.2.6",
+    "prompt-toolkit>=3.0.52",
+    "pyserial>=3.5",
+    "serial>=0.0.97",
 ]
 
 [build-system]
