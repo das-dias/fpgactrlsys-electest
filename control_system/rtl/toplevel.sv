@@ -131,15 +131,26 @@ module toplevel (
     // ============================================================
     // PRBS test generator
     // ============================================================
+    logic prbs_sw_prev;
+    logic prbs_sw_pulse; // one shot pulse to program the seed into test prbs
+
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb)
+            prbs_sw_prev <= 1'b0;
+        else
+            prbs_sw_prev <= test_prbs_toggle_sw;
+    end
+
+    assign prbs_sw_pulse = test_prbs_toggle_sw & ~prbs_sw_prev; // rising edge pulse
 
 
     logic prbs_test_output;
     localparam logic [7:0] prbs_test_seed = 8'd42;
     prbs_lfsr test_prbs (
-        .enb    (!test_prbs_toggle_sw),
+        .enb    (~test_prbs_toggle_sw),
         .clk    (clk),
         .rstb   (rstb),
-        .we     (test_prbs_toggle_sw),
+        .we     (prbs_sw_pulse),
         .d_seed (prbs_test_seed),
         .s_out  (test_prbs50mhz)
     );
