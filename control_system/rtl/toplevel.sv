@@ -9,6 +9,8 @@ module toplevel (
     // RX/TX controller switches
     input  logic testen_toggle_sw,
     input  logic afeen_toggle_sw,
+    input  logic test_clock_toggle_sw,
+    input  logic test_prbs_toggle_sw,
 
     // PRBS outputs
     output logic prbs_cross_out,
@@ -29,7 +31,10 @@ module toplevel (
     output logic clkafe,
 
     output logic experiment_ongoing,
-    output logic experiment_done
+    output logic experiment_done,
+
+    output logic test_clk100mhz,
+    output logic test_prbs50mhz
 );
 
     // ============================================================
@@ -57,13 +62,9 @@ module toplevel (
     uart_rx uart0 (
         .clk   (clk),
         .rstb  (rstb),
-
         .s_in  (uart_rx_i),
-
         .ready (uart_ready),
-
         .d_out (uart_data),
-
         .valid (uart_valid)
     );
 
@@ -122,6 +123,27 @@ module toplevel (
         .experiment_duration_we      (experiment_duration_we),
         .toggle_period_we            (toggle_period_we)
     );
+
+    // Clock Testing Pins
+    assign test_clk100mhz = test_clock_toggle_sw & clk;
+    
+    // PRBS testing pins
+    // ============================================================
+    // PRBS test generator
+    // ============================================================
+
+
+    logic prbs_test_output;
+    localparam logic [7:0] prbs_test_seed = 8'd42;
+    prbs_lfsr test_prbs (
+        .enb    (!test_prbs_toggle_sw),
+        .clk    (clk),
+        .rstb   (rstb),
+        .we     (test_prbs_toggle_sw),
+        .d_seed (prbs_test_seed),
+        .s_out  (test_prbs50mhz)
+    );
+
 
     // ============================================================
     // UART programming FSM

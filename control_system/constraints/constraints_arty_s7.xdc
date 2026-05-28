@@ -34,6 +34,12 @@ set_property -dict { PACKAGE_PIN H14 IOSTANDARD LVCMOS33 } [get_ports { testen_t
 ## AFEEN switch
 set_property -dict { PACKAGE_PIN H18 IOSTANDARD LVCMOS33 } [get_ports { afeen_toggle_sw }]
 
+## TEST CLOCK SWITCH
+set_property -dict { PACKAGE_PIN G18 IOSTANDARD LVCMOS33 } [get_ports { test_clock_toggle_sw }]
+
+## TEST PRBS SWITCH
+set_property -dict { PACKAGE_PIN M5 IOSTANDARD LVCMOS33 } [get_ports { test_prbs_toggle_sw }]
+
 ## ================================================================
 ## STATUS LEDs
 ## ================================================================
@@ -88,6 +94,16 @@ set_property -dict { PACKAGE_PIN T18 IOSTANDARD LVCMOS33 } [get_ports { cseb }]
 
 ## JB4 -> CLKAFE
 set_property -dict { PACKAGE_PIN P14 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]
+
+# ## PMOD JC
+# test_clk100mhz -> JC1
+set_property -dict { PACKAGE_PIN U15  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1
+# test_prbs50mhz -> JC2
+set_property -dict { PACKAGE_PIN V16  IOSTANDARD LVCMOS33 } [get_ports { test_prbs50mhz }]; # Sch=jc2
+
+# Tell Vivado not to worry about timing constraints, just for probing reasons:
+set_false_path -to [get_ports { test_clk100mhz }]
+set_false_path -to [get_ports { test_prbs50mhz }]
 
 ## ================================================================
 ## CONFIGURATION
