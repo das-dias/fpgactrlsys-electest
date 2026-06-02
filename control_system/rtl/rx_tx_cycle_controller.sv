@@ -84,7 +84,7 @@ module rx_tx_cycle_controller (
         .rstb     (rstb),
         .enable    (experiment_ongoing),
         .clear     (exp_clear),
-        .we       (we_experiment_duration),
+        .we        (we_experiment_duration),
         .max_value (experiment_duration_us),
         .count     (),
         .overflow_flag  (exp_done)
@@ -104,7 +104,7 @@ module rx_tx_cycle_controller (
         .rstb     (rstb),
         .enable    (experiment_ongoing),
         .clear     (toggle_clear),
-        .we       (we_toggle_period),
+        .we        (we_toggle_period),
         .max_value (toggle_period_us),
         .count     (),
         .overflow_flag  (toggle_event)
@@ -124,12 +124,15 @@ module rx_tx_cycle_controller (
     } state_t;
 
     state_t state;
-
+    
+    // 100MHz output clock driver
+    assign clkafe = experiment_ongoing && clk; 
+    
     // ============================================================
     // Main FSM
     // Runs only at 50 MHz update rate
     // ============================================================
-
+    
     always_ff @(posedge clk or negedge rstb) begin
 
         if (!rstb) begin
@@ -157,7 +160,7 @@ module rx_tx_cycle_controller (
 
         end
         else begin
-
+            
             // defaults
             exp_clear       <= 1'b0;
             toggle_clear    <= 1'b0;
@@ -169,9 +172,6 @@ module rx_tx_cycle_controller (
             // ====================================================
 
             if (clk50_en) begin
-
-                // Optional generated 50 MHz output clock
-                clkafe <= ~clkafe;
 
                 case (state)
 
