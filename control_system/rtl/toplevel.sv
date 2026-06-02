@@ -116,7 +116,6 @@ module toplevel (
 
     address_decoder decoder0 (
         .addr                        (addr_reg),
-
         .prbs_lfsr_cross_we          (prbs_lfsr_cross_we),
         .prbs_lfsr_enable_we         (prbs_lfsr_enable_we),
         .watchdog_pga_controller_we  (watchdog_pga_controller_we),
@@ -142,9 +141,7 @@ module toplevel (
     end
 
     assign prbs_sw_pulse = test_prbs_toggle_sw & ~prbs_sw_prev; // rising edge pulse
-
-
-    logic prbs_test_output;
+    
     localparam logic [7:0] prbs_test_seed = 8'd42;
     prbs_lfsr test_prbs (
         .enb    (~test_prbs_toggle_sw),
