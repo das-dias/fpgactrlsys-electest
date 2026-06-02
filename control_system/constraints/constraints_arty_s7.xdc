@@ -20,6 +20,12 @@ set_property -dict { PACKAGE_PIN F13 IOSTANDARD LVCMOS33 } [get_ports { leds_o[1
 set_property -dict { PACKAGE_PIN E13 IOSTANDARD LVCMOS33 } [get_ports { leds_o[2] }]; # LED 4
 set_property -dict { PACKAGE_PIN H15 IOSTANDARD LVCMOS33 } [get_ports { leds_o[3] }]; # LED 5
 
+# RGB LEDs
+
+set_property -dict { PACKAGE_PIN J15   IOSTANDARD LVCMOS33 } [get_ports { experiment_ongoing }]; #IO_L23N_T3_FWE_B_15 Sch=led0_r
+set_property -dict { PACKAGE_PIN G17   IOSTANDARD LVCMOS33 } [get_ports { experiment_done }]; #IO_L14N_T2_SRCC_15 Sch=led0_g
+set_property -dict { PACKAGE_PIN F15   IOSTANDARD LVCMOS33 } [get_ports { rxstate }]; #IO_L13N_T2_MRCC_15 Sch=led0_b
+
 # PMOD JA
 
 set_property -dict { PACKAGE_PIN L17  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1 # test_clk100mhz -> JB9
