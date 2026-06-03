@@ -1,136 +1,168 @@
-/* Original source: https://github.com/medalotte/SystemVerilog-UART.git */
-module uart_rx_v2 #(
-    parameter
-        DATA_WIDTH = 8,
-        BAUD_RATE  = 115200,
-        CLK_FREQ   = 100_000_000,
+// =============================================================================
+// UART Receiver for Arty S7-50 FPGA
+// -----------------------------------------------------------------------------
+// Board clock  : 100 MHz
+// Default baud : 115200
+// Data format  : 8N1  (8 data bits, No parity, 1 stop bit)
+//
+// Ports
+//   clk            - 100 MHz board clock
+//   rstb           - Active-low synchronous reset
+//   s_in           - UART RX serial input line
+//   ready          - Consumer asserts high when it can accept a new byte;
+//                    d_out and valid are held until ready is seen
+//   d_out          - DATA_WIDTH-bit received word (held until handshake)
+//   valid          - High when d_out holds a complete, un-consumed byte
+// =============================================================================
 
-    localparam
-        MAX_VAL          = DATA_WIDTH - 1,
-        LB_DATA_WIDTH    = $clog2(DATA_WIDTH),
-        PULSE_WIDTH      = CLK_FREQ / BAUD_RATE,
-        LB_PULSE_WIDTH   = $clog2(PULSE_WIDTH),
-        HALF_PULSE_WIDTH = PULSE_WIDTH / 2
-    )(
-        input   logic clk,
-        input   logic rstb,
-        input   logic s_in,
-        input   logic ready,
+module uart_rx #(
+    parameter int CLK_FREQ   = 100_000_000,  // 100 MHz
+    parameter int BAUD_RATE  = 115_200,
+    parameter int DATA_WIDTH = 8             // bits per frame (normally 8)
+) (
+    input   logic                  clk,
+    input   logic                  rstb,    // active-low reset
+    input   logic                  s_in,    // serial RX line
+    input   logic                  ready,   // consumer ready (valid/ready handshake)
+    output  logic [DATA_WIDTH-1:0] d_out,
+    output  logic                  valid
+);
 
-        output  logic [DATA_WIDTH-1:0] d_out,
-        output  logic valid
-    );
+    // -------------------------------------------------------------------------
+    // Derived parameters
+    // -------------------------------------------------------------------------
+    localparam int CLKS_PER_BIT = CLK_FREQ / BAUD_RATE;        // 868 @ 115200
+    localparam int HALF_BIT     = CLKS_PER_BIT / 2;            // 434
+    localparam int CTR_WIDTH    = $clog2(CLKS_PER_BIT + 1);    // 10
+    localparam int IDX_WIDTH    = $clog2(DATA_WIDTH);           // 3 for 8-bit
 
-    //-----------------------------------------------------------------------------
-    // Asynchronous input synchronizer
-    //-----------------------------------------------------------------------------
-    logic s_in_sync0, s_in_sync1;
+    // -------------------------------------------------------------------------
+    // FSM states
+    // -------------------------------------------------------------------------
+    typedef enum logic [2:0] {
+        IDLE,
+        START,
+        DATA,
+        STOP,
+        DONE
+    } state_t;
+
+    state_t state;
+
+    // -------------------------------------------------------------------------
+    // Internal signals
+    // -------------------------------------------------------------------------
+    // Two-stage synchroniser — prevents metastability on the async s_in pin
+    logic s_sync0, s_sync1;
+
+    logic [CTR_WIDTH-1:0]    bit_ctr;   // clock counter within one bit period
+    logic [IDX_WIDTH-1:0]    bit_idx;   // data bit currently being captured
+    logic [DATA_WIDTH-1:0]   shift_reg; // assembles received bits (LSB first)
+
+    // -------------------------------------------------------------------------
+    // Metastability synchroniser
+    // -------------------------------------------------------------------------
     always_ff @(posedge clk) begin
-        if(!rstb) begin
-            s_in_sync0 <= 1'b1;
-            s_in_sync1 <= 1'b1;
-        end else begin
-            s_in_sync0 <= s_in;
-            s_in_sync1 <= s_in_sync0;
-        end
+        s_sync0 <= s_in;
+        s_sync1 <= s_sync0;
     end
 
-    //-----------------------------------------------------------------------------
-    // State Machine Type Definition
-    //-----------------------------------------------------------------------------
-    typedef enum logic [1:0] {
-        STT_DATA,
-        STT_STOP,
-        STT_IDLE
-    } statetype;
-    
-    statetype               state;
-
-    logic [DATA_WIDTH-1:0]   data_tmp_r;
-    logic [LB_DATA_WIDTH-1:0] data_cnt;
-    logic [LB_PULSE_WIDTH:0] clk_cnt;
-    logic                    rx_done;
-
-    //-----------------------------------------------------------------------------
-    // Receive FSM Logic
-    //-----------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // FSM + datapath
+    // -------------------------------------------------------------------------
     always_ff @(posedge clk) begin
-        if(!rstb) begin
-            state      <= STT_IDLE;
-            data_tmp_r <= 0;
-            data_cnt   <= 0;
-            clk_cnt    <= 0;
+        if (!rstb) begin
+            state     <= IDLE;
+            bit_ctr   <= '0;
+            bit_idx   <= '0;
+            shift_reg <= '0;
+            d_out     <= '0;
+            valid     <= 1'b0;
         end else begin
-            case(state)
 
-            //-----------------------------------------------------------------------------
-            // state      : STT_DATA
-            // behavior   : deserialize and receive data
-            STT_DATA: begin
-                if(0 < clk_cnt) begin
-                    clk_cnt <= clk_cnt - 1;
-                end else begin
-                    data_tmp_r <= {s_in_sync1, data_tmp_r[DATA_WIDTH-1:1]};
-                    clk_cnt    <= PULSE_WIDTH[LB_PULSE_WIDTH:0] - 1'b1;
+            case (state)
+                // -------------------------------------------------------------
+                // IDLE – line is high; wait for start bit (falling edge)
+                // If valid is asserted and the consumer is ready, deassert it.
+                // -------------------------------------------------------------
+                IDLE: begin
+                    bit_ctr <= '0;
+                    bit_idx <= '0;
 
-                    if(data_cnt == MAX_VAL[LB_DATA_WIDTH-1:0]) begin
-                        state <= STT_STOP;
+                    // Handshake: clear valid once consumer accepts
+                    if (valid && ready)
+                        valid <= 1'b0;
+
+                    // Detect start bit only when no pending data is waiting,
+                    // or the handshake just completed this cycle
+                    if (!s_sync1 && !(valid && !ready))
+                        state <= START;
+                end
+
+                // -------------------------------------------------------------
+                // START – advance to the centre of the start bit and verify
+                // it is still low (rejects glitches shorter than half a bit).
+                // -------------------------------------------------------------
+                START: begin
+                    if (bit_ctr == HALF_BIT - 1) begin
+                        bit_ctr <= '0;
+                        if (!s_sync1)
+                            state <= DATA;
+                        else
+                            state <= IDLE;   // glitch — abort
                     end else begin
-                        data_cnt <= data_cnt + 1'b1;
+                        bit_ctr <= bit_ctr + 1;
                     end
                 end
-            end
 
-            //-----------------------------------------------------------------------------
-            // state      : STT_STOP
-            // behavior   : watch stop bit
-            STT_STOP: begin
-                if(0 < clk_cnt) begin
-                    clk_cnt <= clk_cnt - 1;
-                end else begin
-                    state <= STT_IDLE;
+                // -------------------------------------------------------------
+                // DATA – sample each bit at the centre of its window.
+                // LSB is received first, per the UART standard.
+                // -------------------------------------------------------------
+                DATA: begin
+                    if (bit_ctr == CLKS_PER_BIT - 1) begin
+                        bit_ctr            <= '0;
+                        shift_reg[bit_idx] <= s_sync1;
+
+                        if (bit_idx == IDX_WIDTH'(DATA_WIDTH - 1)) begin
+                            bit_idx <= '0;
+                            state   <= STOP;
+                        end else begin
+                            bit_idx <= bit_idx + 1'b1;
+                        end
+                    end else begin
+                        bit_ctr <= bit_ctr + 1;
+                    end
                 end
-            end
 
-            //-----------------------------------------------------------------------------
-            // state      : STT_IDLE
-            // behavior   : watch start bit
-            STT_IDLE: begin
-                if(s_in_sync1 == 0) begin
-                    clk_cnt  <= PULSE_WIDTH[LB_PULSE_WIDTH:0] + HALF_PULSE_WIDTH[LB_PULSE_WIDTH:0] - 1'b1;
-                    data_cnt <= 0;
-                    state    <= STT_DATA;
+                // -------------------------------------------------------------
+                // STOP – sample at the centre of the stop bit.
+                // A low stop bit is a framing error; data is discarded.
+                // -------------------------------------------------------------
+                STOP: begin
+                    if (bit_ctr == CLKS_PER_BIT - 1) begin
+                        bit_ctr <= '0;
+                        if (s_sync1)        // valid stop bit → latch
+                            state <= DONE;
+                        else                // framing error → discard
+                            state <= IDLE;
+                    end else begin
+                        bit_ctr <= bit_ctr + 1;
+                    end
                 end
-            end
 
-            default: begin
-                state <= STT_IDLE;
-            end
+                // -------------------------------------------------------------
+                // DONE – present data to consumer; hold until ready handshake.
+                // -------------------------------------------------------------
+                DONE: begin
+                    d_out <= shift_reg;
+                    valid <= 1'b1;
+                    state <= IDLE;
+                end
+
+                default: state <= IDLE;
             endcase
         end
     end
-
-    assign rx_done = (state == STT_STOP) && (clk_cnt == 0) && s_in_sync1;
-
-    //-----------------------------------------------------------------------------
-    // Output Interface Logic (Valid / Ready Handshake)
-    //-----------------------------------------------------------------------------
-    logic [DATA_WIDTH-1:0] data_r;
-    logic                  valid_r;
-
-    always_ff @(posedge clk) begin
-        if(!rstb) begin
-            data_r  <= 0;
-            valid_r <= 0;
-        end else if(rx_done && !valid_r) begin
-            valid_r <= 1;
-            data_r  <= data_tmp_r;
-        end else if(valid_r && ready) begin
-            valid_r <= 0;
-        end
-    end
-
-    assign d_out = data_r;
-    assign valid = valid_r;
 
 endmodule
