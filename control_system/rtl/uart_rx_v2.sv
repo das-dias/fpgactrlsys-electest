@@ -1,4 +1,4 @@
-u/* Original source: https://github.com/medalotte/SystemVerilog-UART.git */
+/* Original source: https://github.com/medalotte/SystemVerilog-UART.git */
 module uart_rx_v2 #(
     parameter
         DATA_WIDTH = 8,
