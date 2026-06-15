@@ -2,6 +2,8 @@
 ## Arty S7 Constraints for Current Top-Level Design
 ## ================================================================
 #clock
+#set_property -dict { PACKAGE_PIN F14   IOSTANDARD LVCMOS33 } [get_ports { clk }]; #IO_L13P_T2_MRCC_15 Sch=uclk
+#create_clock -add -name sys_clk_pin -period 83.333 -waveform {0 41.667} [get_ports { clk }];
 set_property -dict { PACKAGE_PIN R2    IOSTANDARD SSTL135 } [get_ports { clk }]; #IO_L12P_T1_MRCC_34 Sch=ddr3_clk[200]
 create_clock -add -name sys_clk_pin -period 10.000 -waveform {0 5.000}  [get_ports { clk }];
 
@@ -28,8 +30,8 @@ set_property -dict { PACKAGE_PIN F15   IOSTANDARD LVCMOS33 } [get_ports { rxstat
 
 # PMOD JA
 
-set_property -dict { PACKAGE_PIN L17  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1 # test_clk100mhz -> JB9
-set_property -dict { PACKAGE_PIN L18  IOSTANDARD LVCMOS33 } [get_ports { test_prbs50mhz }]; # Sch=jc2 # test_prbs50mhz -> JB10
+#set_property -dict { PACKAGE_PIN L17  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1 # test_clk100mhz -> JB9
+#set_property -dict { PACKAGE_PIN L18  IOSTANDARD LVCMOS33 } [get_ports { test_prbs50mhz }]; # Sch=jc2 # test_prbs50mhz -> JB10
 
 ## PMOD JB
 
@@ -37,6 +39,11 @@ set_property -dict { PACKAGE_PIN P17 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]
 set_property -dict { PACKAGE_PIN P18 IOSTANDARD LVCMOS33 } [get_ports { i2c_sda }]; # JB2 -> I2C SDA
 set_property -dict { PACKAGE_PIN R18 IOSTANDARD LVCMOS33 } [get_ports { i2c_scl }]; # JB3 -> I2C SCL
 set_property -dict { PACKAGE_PIN T18 IOSTANDARD LVCMOS33 } [get_ports { i2c_cse_n }]; # JB4 -> I2C CSEB
+
+set_property -dict { PACKAGE_PIN P14  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1 # test_clk100mhz -> JB9
+set_property -dict { PACKAGE_PIN P15  IOSTANDARD LVCMOS33 } [get_ports { test_prbs50mhz }]; # Sch=jc2 # test_prbs50mhz -> JB10
+
+
 
 # PMOD JC
 
@@ -49,8 +56,8 @@ set_property -dict { PACKAGE_PIN P13 IOSTANDARD LVCMOS33 } [get_ports { prbs_cro
 set_property -dict { PACKAGE_PIN R13 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA1 -> PRBS ENABLE OUTPUT
 
 # Tell Vivado not to worry about timing constraints, just for probing reasons:
-#set_false_path -to [get_ports { test_clk100mhz }]
-#set_false_path -to [get_ports { test_prbs50mhz }]
+set_false_path -to [get_ports { test_clk100mhz }]
+set_false_path -to [get_ports { test_prbs50mhz }]
 
 ## Configuration options, can be used for all designs
 set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]
