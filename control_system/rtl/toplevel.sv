@@ -1,14 +1,13 @@
 module toplevel (
-
     input  logic clk,       // 100 MHz clock
     input  logic rstb,
-
+    
     // UART RX input
     input  logic uart_rx_i,
 
     // RX/TX controller switches
-    input  logic testen_toggle_sw,
-    input  logic afeen_toggle_sw,
+    input  logic testen_toggle_sw, //# == sw[0],
+    input  logic afeen_toggle_sw, //# == sw[1],
     input  logic test_clock_toggle_sw,
     input  logic test_prbs_toggle_sw,
 
@@ -24,23 +23,27 @@ module toplevel (
     // RX/TX control outputs
     output logic chip_rstb,
     output logic rxtxb,
-    output logic rxstate,
+    //output logic rxstate,
     output logic testen,
     output logic afeen,
     output logic cseb,
     output logic clkafe,
 
+// Remove these status indicators... they're worthless
     output logic experiment_ongoing,
     output logic experiment_done,
+    output logic rxstate,
 
     output logic test_clk100mhz,
-    output logic test_prbs50mhz
+    output logic test_prbs50mhz,
+
+    // NEW: Four output LEDs
+    output logic [3:0] leds_o
 );
 
     // ============================================================
     // UART instruction map
     // ============================================================
-
     localparam logic [7:0] RUN_EXPERIMENT_ADDR      = 8'h01;
     localparam logic [7:0] PRBS_CROSS_ADDR          = 8'h02;
     localparam logic [7:0] PRBS_ENABLE_ADDR         = 8'h03;
@@ -51,11 +54,9 @@ module toplevel (
     // ============================================================
     // UART RX
     // ============================================================
-
     logic [7:0] uart_data;
     logic       uart_valid;
-
-    logic uart_ready;
+    logic       uart_ready;
 
     assign uart_ready = 1'b1;
 
@@ -74,29 +75,29 @@ module toplevel (
     // BYTE0 = address/instruction
     // BYTE1 = data
     // ============================================================
-
     typedef enum logic [0:0] {
         WAIT_ADDR,
         WAIT_DATA
     } uart_state_t;
 
     uart_state_t uart_state;
-
+    
     logic [7:0] addr_reg;
     logic [7:0] data_reg;
 
+    // NEW: Internal register to hold the LED state
+    // logic [3:0] led_reg;
+    assign leds_o[3:0] = uart_data[3:0];
+    
     // ============================================================
     // Shared 8-bit programming bus
     // ============================================================
-
     logic [7:0] shared_data_bus;
-
     assign shared_data_bus = data_reg;
 
     // ============================================================
     // Decoder WE signals
     // ============================================================
-
     logic prbs_lfsr_cross_we;
     logic prbs_lfsr_enable_we;
     logic watchdog_pga_controller_we;
@@ -107,13 +108,11 @@ module toplevel (
     // Experiment enable register
     // Active-low enable
     // ============================================================
-
     logic experiment_enb;
 
     // ============================================================
     // Address decoder
     // ============================================================
-
     address_decoder decoder0 (
         .addr                        (addr_reg),
         .prbs_lfsr_cross_we          (prbs_lfsr_cross_we),
@@ -122,7 +121,6 @@ module toplevel (
         .experiment_duration_we      (experiment_duration_we),
         .toggle_period_we            (toggle_period_we)
     );
-
     // Clock Testing Pins
     assign test_clk100mhz = test_clock_toggle_sw & clk;
     
@@ -131,7 +129,7 @@ module toplevel (
     // PRBS test generator
     // ============================================================
     logic prbs_sw_prev;
-    logic prbs_sw_pulse; // one shot pulse to program the seed into test prbs
+    logic prbs_sw_pulse;
 
     always_ff @(posedge clk or negedge rstb) begin
         if (!rstb)
@@ -140,7 +138,7 @@ module toplevel (
             prbs_sw_prev <= test_prbs_toggle_sw;
     end
 
-    assign prbs_sw_pulse = test_prbs_toggle_sw & ~prbs_sw_prev; // rising edge pulse
+    assign prbs_sw_pulse = test_prbs_toggle_sw & ~prbs_sw_prev; 
     
     localparam logic [7:0] prbs_test_seed = 8'd42;
     prbs_lfsr test_prbs (
@@ -152,69 +150,57 @@ module toplevel (
         .s_out  (test_prbs50mhz)
     );
 
-
     // ============================================================
     // UART programming FSM
     // ============================================================
-
     always_ff @(posedge clk or negedge rstb) begin
-
         if (!rstb) begin
-
-            uart_state <= WAIT_ADDR;
-
-            addr_reg <= 8'h00;
-            data_reg <= 8'h00;
-
+            uart_state     <= WAIT_ADDR;
+            addr_reg       <= 8'h00;
+            data_reg       <= 8'h00;
             experiment_enb <= 1'b1;
-
+            //led_reg        <= 4'h0; // NEW: Reset LEDs to off
         end
         else begin
-
             if (uart_valid) begin
-
+                
+                 
                 case (uart_state)
-
                     // ============================================
                     // First byte = address/instruction
                     // ============================================
                     WAIT_ADDR: begin
-
-                        addr_reg <= uart_data;
-
+                        addr_reg   <= uart_data;
                         uart_state <= WAIT_DATA;
-
                     end
 
                     // ============================================
                     // Second byte = data
                     // ============================================
                     WAIT_DATA: begin
-
                         data_reg <= uart_data;
+
+                        // NEW: Capture the lower 4 bits of the incoming data byte
+                        //led_reg  <= uart_data[3:0];
 
                         // RUN experiment command
                         if (addr_reg == RUN_EXPERIMENT_ADDR) begin
-
                             // data = 0 -> run
                             if (uart_data == 8'h00)
                                 experiment_enb <= 1'b0;
-
                             // nonzero -> stop
                             else
                                 experiment_enb <= 1'b1;
                         end
 
                         uart_state <= WAIT_ADDR;
-
                     end
-
                 endcase
             end
         end
     end
-
-    // ============================================================
+    
+     // ============================================================
     // PRBS generators
     // ============================================================
 
@@ -299,5 +285,4 @@ module toplevel (
         .experiment_ongoing      (experiment_ongoing),
         .experiment_done         (experiment_done)
     );
-
 endmodule
