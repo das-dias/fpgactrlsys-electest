@@ -29,32 +29,32 @@ set_property -dict { PACKAGE_PIN J15   IOSTANDARD LVCMOS33 } [get_ports { experi
 set_property -dict { PACKAGE_PIN G17   IOSTANDARD LVCMOS33 } [get_ports { experiment_done }]; #IO_L14N_T2_SRCC_15 Sch=led0_g
 set_property -dict { PACKAGE_PIN F15   IOSTANDARD LVCMOS33 } [get_ports { rxstate }]; #IO_L13N_T2_MRCC_15 Sch=led0_b
 
-# PMOD JA
 
-#set_property -dict { PACKAGE_PIN L17  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1 # test_clk100mhz -> JB9
-#set_property -dict { PACKAGE_PIN L18  IOSTANDARD LVCMOS33 } [get_ports { test_prbs50mhz }]; # Sch=jc2 # test_prbs50mhz -> JB10
+## PMOD JA
 
-## PMOD JB
+set_property -dict { PACKAGE_PIN L18 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]; # JA8 -> RXTXB
+set_property -dict { PACKAGE_PIN L17 IOSTANDARD LVCMOS33 } [get_ports { i2c_sda }]; # JA7 -> I2C SDA
+set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { i2c_scl }]; # JA1 -> I2C SCL
+set_property -dict { PACKAGE_PIN M17 IOSTANDARD LVCMOS33 } [get_ports { i2c_cse_n }]; # JA2 -> I2C CSEB
 
-set_property -dict { PACKAGE_PIN P17 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]; # JB5 -> RXTXB
-set_property -dict { PACKAGE_PIN P18 IOSTANDARD LVCMOS33 } [get_ports { i2c_sda }]; # JB2 -> I2C SDA
-set_property -dict { PACKAGE_PIN R18 IOSTANDARD LVCMOS33 } [get_ports { i2c_scl }]; # JB3 -> I2C SCL
-set_property -dict { PACKAGE_PIN T18 IOSTANDARD LVCMOS33 } [get_ports { i2c_cse_n }]; # JB4 -> I2C CSEB
+set_property -dict { PACKAGE_PIN M18 IOSTANDARD LVCMOS33 } [get_ports { prbs_cross_out }]; # JA9 -> PRBS CROSS OUTPUT
+set_property -dict { PACKAGE_PIN M14 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA4 -> PRBS ENABLE OUTPUT
+set_property -dict { PACKAGE_PIN N14 IOSTANDARD LVCMOS33 } [get_ports { chip_rstb }]; # JA10 -> CHIP RESET
+set_property -dict { PACKAGE_PIN N18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JB4 -> CLKAFE
+
+
+# PMOD JB
+
+set_property -dict { PACKAGE_PIN N15 IOSTANDARD LVCMOS33 } [get_ports { testen }]; # JB9 -> TESTEN
+set_property -dict { PACKAGE_PIN P15 IOSTANDARD LVCMOS33 } [get_ports { afeen }]; # JB8 -> AFEEN
+set_property -dict { PACKAGE_PIN R18 IOSTANDARD LVCMOS33 } [get_ports { cseb }];# JB3 -> CSEB
+#set_property -dict { PACKAGE_PIN U18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JB4 -> CLKAFE
+
+
 
 set_property -dict { PACKAGE_PIN P14  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1 # test_clk100mhz -> JB9
 set_property -dict { PACKAGE_PIN P15  IOSTANDARD LVCMOS33 } [get_ports { test_prbs50mhz }]; # Sch=jc2 # test_prbs50mhz -> JB10
 
-
-
-# PMOD JC
-
-set_property -dict { PACKAGE_PIN U15 IOSTANDARD LVCMOS33 } [get_ports { testen }]; # JB1 -> TESTEN
-set_property -dict { PACKAGE_PIN V16 IOSTANDARD LVCMOS33 } [get_ports { afeen }]; # JB2 -> AFEEN
-set_property -dict { PACKAGE_PIN U17 IOSTANDARD LVCMOS33 } [get_ports { cseb }];# JB3 -> CSEB
-set_property -dict { PACKAGE_PIN U18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JB4 -> CLKAFE
-set_property -dict { PACKAGE_PIN U16 IOSTANDARD LVCMOS33 } [get_ports { chip_rstb }]; # JC0 -> CHIP RESET
-set_property -dict { PACKAGE_PIN P13 IOSTANDARD LVCMOS33 } [get_ports { prbs_cross_out }]; # JA0 -> PRBS CROSS OUTPUT
-set_property -dict { PACKAGE_PIN R13 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA1 -> PRBS ENABLE OUTPUT
 
 # Tell Vivado not to worry about timing constraints, just for probing reasons:
 set_false_path -to [get_ports { test_clk100mhz }]
