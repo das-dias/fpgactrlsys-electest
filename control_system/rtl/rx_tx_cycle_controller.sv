@@ -301,7 +301,7 @@ module rx_tx_cycle_controller (
                         end
                     end
 
-                    // ============================================
+                   // ============================================
                     // Cleanup
                     // ============================================
                     COMPLETE: begin
@@ -314,11 +314,19 @@ module rx_tx_cycle_controller (
 
                         experiment_done <= 1'b1;
 
-                        state <= IDLE;
-                    end
-
-                    default: begin
-                        state <= IDLE;
+                        // FIX 7: cyclic operation. If enb is still asserted
+                        // (low), loop directly back into RESET_PULSE to
+                        // refresh and restart the experiment automatically,
+                        // instead of waiting in IDLE for a new falling edge
+                        // that will never come while enb stays low.
+                        // If enb has been deasserted, fall back to IDLE as
+                        // before, ready for the next falling-edge trigger.
+                        if (!enb) begin
+                            state <= RESET_PULSE;
+                        end
+                        else begin
+                            state <= IDLE;
+                        end
                     end
 
                 endcase
