@@ -145,7 +145,7 @@ module rx_tx_cycle_controller (
     // Glitch-free gated clock for clkafe
     // ============================================================
 
-    // FIX 3: a plain "experiment_ongoing && clk" AND-gate gate can produce a
+    // FIX 3: a plain "experiment_ongoing && clk" AND-gate can produce a
     // runt/glitch pulse on clkafe if experiment_ongoing transitions while clk
     // is high. Standard integrated-clock-gating (ICG) technique: latch the
     // enable while clk is LOW (transparent low phase), so it can only change
@@ -165,6 +165,20 @@ module rx_tx_cycle_controller (
     // portable/ASIC-style equivalent; swap in the vendor cell if available.
 
     // ============================================================
+    // testen / afeen: live combinational pass-through
+    // ============================================================
+
+    // FIX 5/6: testen and afeen now directly follow their toggle switches at
+    // all times, independent of FSM state. Previously these were sampled
+    // once at START_RX (or briefly tracked only during RUN_EXPERIMENT),
+    // so changes to the switches outside that state/window were ignored.
+    // They are now combinational and fully live, and have been removed
+    // from the always_ff block below (including the reset branch, since a
+    // continuously-driven wire doesn't need a reset value).
+    assign testen = testen_toggle_sw;
+    assign afeen  = afeen_toggle_sw;
+
+    // ============================================================
     // Main FSM
     // Runs only at 50 MHz update rate
     // ============================================================
@@ -181,14 +195,7 @@ module rx_tx_cycle_controller (
 
             rxstate <= 1'b0;
 
-            testen <= 1'b0;
-            afeen  <= 1'b0;
-
             cseb <= 1'b1;
-
-            // FIX 1: clkafe is purely combinational (driven above) and must
-            // not also be assigned procedurally here — removed to avoid a
-            // multi-driver conflict.
 
             experiment_ongoing <= 1'b0;
             experiment_done    <= 1'b0;
@@ -223,9 +230,6 @@ module rx_tx_cycle_controller (
                         rxtxb <= 1'b1;
 
                         rxstate <= 1'b0;
-
-                        testen <= 1'b0;
-                        afeen  <= 1'b0;
 
                         cseb <= 1'b1;
 
@@ -265,9 +269,6 @@ module rx_tx_cycle_controller (
 
                         rxstate <= 1'b1;
 
-                        testen <= testen_toggle_sw;
-                        afeen  <= afeen_toggle_sw;
-
                         cseb <= 1'b0;
 
                         experiment_ongoing <= 1'b1;
@@ -306,9 +307,6 @@ module rx_tx_cycle_controller (
                     COMPLETE: begin
 
                         rxstate <= 1'b0;
-
-                        testen <= 1'b0;
-                        afeen  <= 1'b0;
 
                         cseb <= 1'b1;
 
