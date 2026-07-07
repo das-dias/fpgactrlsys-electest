@@ -71,6 +71,37 @@ module rx_tx_cycle_controller (
                               (enb   == 1'b0);
 
     // ============================================================
+    // FSM state (declared here so start_pending can reference it)
+    // ============================================================
+
+    typedef enum logic [2:0] {
+        IDLE,
+        RESET_PULSE,
+        WAIT_ONE_CLOCK,
+        START_RX,
+        RUN_EXPERIMENT,
+        COMPLETE
+    } state_t;
+
+    state_t state;
+
+    // FIX 2: start_experiment is a single-cycle pulse at 100 MHz, but the FSM
+    // only advances on clk50_en cycles, so the pulse could land on the "wrong"
+    // phase and be missed entirely, leaving the FSM stuck in IDLE forever.
+    // Latch it into a sticky bit that's held until the FSM (running at the
+    // 50 MHz update rate) actually consumes it.
+    logic start_pending;
+
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb)
+            start_pending <= 1'b0;
+        else if (start_experiment)
+            start_pending <= 1'b1;
+        else if (clk50_en && state == IDLE && start_pending)
+            start_pending <= 1'b0;
+    end
+
+    // ============================================================
     // Experiment duration timer
     // ============================================================
 
@@ -111,23 +142,28 @@ module rx_tx_cycle_controller (
     );
 
     // ============================================================
-    // FSM
+    // Glitch-free gated clock for clkafe
     // ============================================================
 
-    typedef enum logic [2:0] {
-        IDLE,
-        RESET_PULSE,
-        WAIT_ONE_CLOCK,
-        START_RX,
-        RUN_EXPERIMENT,
-        COMPLETE
-    } state_t;
+    // FIX 3: a plain "experiment_ongoing && clk" AND-gate gate can produce a
+    // runt/glitch pulse on clkafe if experiment_ongoing transitions while clk
+    // is high. Standard integrated-clock-gating (ICG) technique: latch the
+    // enable while clk is LOW (transparent low phase), so it can only change
+    // clkafe's behavior during the low phase of clk, never mid-high-pulse.
+    logic experiment_ongoing_latched;
 
-    state_t state;
-    
-    // 100MHz output clock driver
-    assign clkafe = experiment_ongoing && clk; 
-    
+    always_latch begin
+        if (!clk)
+            experiment_ongoing_latched <= experiment_ongoing;
+    end
+
+    assign clkafe = experiment_ongoing_latched && clk;
+
+    // NOTE: if targeting an FPGA, prefer a vendor primitive instead of this
+    // inferred latch (e.g. Xilinx BUFGCE/BUFGMUX), since FPGA tools often
+    // don't infer/route latch-based clock gates cleanly. This RTL is the
+    // portable/ASIC-style equivalent; swap in the vendor cell if available.
+
     // ============================================================
     // Main FSM
     // Runs only at 50 MHz update rate
@@ -150,7 +186,9 @@ module rx_tx_cycle_controller (
 
             cseb <= 1'b1;
 
-            clkafe <= 1'b0;
+            // FIX 1: clkafe is purely combinational (driven above) and must
+            // not also be assigned procedurally here — removed to avoid a
+            // multi-driver conflict.
 
             experiment_ongoing <= 1'b0;
             experiment_done    <= 1'b0;
@@ -193,7 +231,9 @@ module rx_tx_cycle_controller (
 
                         experiment_ongoing <= 1'b0;
 
-                        if (start_experiment) begin
+                        // FIX 2: check the latched sticky bit instead of the
+                        // raw, possibly-missed start_experiment pulse.
+                        if (start_pending) begin
                             state <= RESET_PULSE;
                         end
                     end
