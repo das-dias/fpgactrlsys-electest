@@ -32,16 +32,15 @@ set_property -dict { PACKAGE_PIN F15   IOSTANDARD LVCMOS33 } [get_ports { rxstat
 
 ## PMOD JA
 
-set_property -dict { PACKAGE_PIN L18 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]; # JA8 -> RXTXB
-set_property -dict { PACKAGE_PIN L17 IOSTANDARD LVCMOS33 } [get_ports { i2c_sda }]; # JA7 -> I2C SDA
-set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { i2c_scl }]; # JA1 -> I2C SCL
-set_property -dict { PACKAGE_PIN M17 IOSTANDARD LVCMOS33 } [get_ports { i2c_cse_n }]; # JA2 -> I2C CSEB
+set_property -dict { PACKAGE_PIN L18 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]; # JA8 -> RXTXB - DEAD
+set_property -dict { PACKAGE_PIN L17 IOSTANDARD LVCMOS33 } [get_ports { i2c_sda }]; # JA1 -> I2C SDA
+set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { i2c_scl }]; # JA7 -> I2C SCL
+set_property -dict { PACKAGE_PIN M17 IOSTANDARD LVCMOS33 } [get_ports { i2c_cse_n }]; # JA8 -> I2C CSEB
 
-set_property -dict { PACKAGE_PIN M18 IOSTANDARD LVCMOS33 } [get_ports { prbs_cross_out }]; # JA9 -> PRBS CROSS OUTPUT
-set_property -dict { PACKAGE_PIN M14 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA4 -> PRBS ENABLE OUTPUT
-set_property -dict { PACKAGE_PIN N14 IOSTANDARD LVCMOS33 } [get_ports { chip_rstb }]; # JA10 -> CHIP RESET
-set_property -dict { PACKAGE_PIN N18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JB4 -> CLKAFE
-
+set_property -dict { PACKAGE_PIN M18 IOSTANDARD LVCMOS33 } [get_ports { prbs_cross_out }]; # JA9 -> PRBS CROSS OUTPUT - DEAD
+set_property -dict { PACKAGE_PIN M14 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA3 -> PRBS ENABLE OUTPUT 
+set_property -dict { PACKAGE_PIN N14 IOSTANDARD LVCMOS33 } [get_ports { chip_rstb }]; # JA4 -> CHIP RESET - DEAD
+set_property -dict { PACKAGE_PIN N18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JA10 -> CLKAFE - DEAD
 
 # PMOD JB
 
