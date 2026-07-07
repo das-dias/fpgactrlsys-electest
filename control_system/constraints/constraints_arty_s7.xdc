@@ -33,23 +33,27 @@ set_property -dict { PACKAGE_PIN F15   IOSTANDARD LVCMOS33 } [get_ports { rxstat
 ## PMOD JA
 
 set_property -dict { PACKAGE_PIN L18 IOSTANDARD LVCMOS33 } [get_ports { rxtxb }]; # JA8 -> RXTXB - DEAD
-set_property -dict { PACKAGE_PIN L17 IOSTANDARD LVCMOS33 } [get_ports { i2c_sda }]; # JA1 -> I2C SDA
-set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { i2c_scl }]; # JA7 -> I2C SCL
+set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { i2c_sda }]; # JA1 -> I2C SDA
+set_property -dict { PACKAGE_PIN L17 IOSTANDARD LVCMOS33 } [get_ports { i2c_scl }]; # JA7 -> I2C SCL
 set_property -dict { PACKAGE_PIN M17 IOSTANDARD LVCMOS33 } [get_ports { i2c_cse_n }]; # JA8 -> I2C CSEB
 
-set_property -dict { PACKAGE_PIN M18 IOSTANDARD LVCMOS33 } [get_ports { prbs_cross_out }]; # JA9 -> PRBS CROSS OUTPUT - DEAD
-set_property -dict { PACKAGE_PIN M14 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA3 -> PRBS ENABLE OUTPUT 
-set_property -dict { PACKAGE_PIN N14 IOSTANDARD LVCMOS33 } [get_ports { chip_rstb }]; # JA4 -> CHIP RESET - DEAD
-set_property -dict { PACKAGE_PIN N18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JA10 -> CLKAFE - DEAD
+set_property -dict { PACKAGE_PIN M18 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA9 -> PRBS CROSS OUTPUT - DEAD
+set_property -dict { PACKAGE_PIN M14 IOSTANDARD LVCMOS33 } [get_ports { prbs_cross_out }]; # JA9 -> PRBS CROSS OUTPUT - DEAD
+set_property -dict { PACKAGE_PIN N14 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JA3
+#set_property -dict { PACKAGE_PIN M14 IOSTANDARD LVCMOS33 } [get_ports { prbs_enable_out }]; # JA3 -> PRBS ENABLE OUTPUT 
+
+set_property -dict { PACKAGE_PIN N18 IOSTANDARD LVCMOS33 } [get_ports { chip_rstb }]; # JA4 -> CHIP RESET - DEAD
+#set_property -dict { PACKAGE_PIN N18 IOSTANDARD LVCMOS33 } [get_ports { testen }]; # JA10 -> TESTEN
+
+#set_property -dict { PACKAGE_PIN N18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JA10 -> CLKAFE 
 
 # PMOD JB
 
-set_property -dict { PACKAGE_PIN N15 IOSTANDARD LVCMOS33 } [get_ports { testen }]; # JB9 -> TESTEN
+#set_property -dict { PACKAGE_PIN N15 IOSTANDARD LVCMOS33 } [get_ports { testen }]; # JB9 -> TESTEN
+
 set_property -dict { PACKAGE_PIN P15 IOSTANDARD LVCMOS33 } [get_ports { afeen }]; # JB8 -> AFEEN
 set_property -dict { PACKAGE_PIN R18 IOSTANDARD LVCMOS33 } [get_ports { cseb }];# JB3 -> CSEB
-#set_property -dict { PACKAGE_PIN U18 IOSTANDARD LVCMOS33 } [get_ports { clkafe }]; # JB4 -> CLKAFE
-
-
+set_property -dict { PACKAGE_PIN N15 IOSTANDARD LVCMOS33 } [get_ports { testen }]; # JB4 -> CLKAFE
 
 set_property -dict { PACKAGE_PIN P16  IOSTANDARD LVCMOS33 } [get_ports { test_clk100mhz }]; # Sch=jc1 # test_clk100mhz -> JB9
 set_property -dict { PACKAGE_PIN T18  IOSTANDARD LVCMOS33 } [get_ports { test_prbs50mhz }]; # Sch=jc2 # test_prbs50mhz -> JB10
