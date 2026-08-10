@@ -214,7 +214,19 @@ module toplevel (
     // ============================================================
     // Watchdog PGA controller
     // ============================================================
+    /*
     watchdog_pga_controller watchdog0 (
+        .clk           (clk),
+        .rstb          (rstb),
+        .enb           (experiment_enb),
+        .we            (watchdog_pga_controller_we),
+        .watchdog_data  (shared_data_bus),
+        .i2c_cse_n     (i2c_cse_n),
+        .i2c_sda       (i2c_sda),
+        .i2c_scl       (i2c_scl)
+    );*/
+
+   prog_gain_controller watchdog1 (
         .clk           (clk),
         .rstb          (rstb),
         .enb           (experiment_enb),
