@@ -69,13 +69,9 @@ module prog_gain_controller (
     ) i2c0 (
         .clk       (clk),
         .rstb     (rstb),
-
         .write     (i2c_write),
-
         .d_in      (i2c_data),
-
         .busy      (i2c_busy),
-
         .i2c_cse_n (i2c_cse_n),
         .i2c_sda   (i2c_sda),
         .i2c_scl   (i2c_scl)
@@ -113,34 +109,20 @@ module prog_gain_controller (
         if (!rstb) begin
 
             state <= WAIT_TIMEOUT;
-
-            pga_state <= 3'b000;
-
             i2c_data <= 8'h00;
-
             i2c_write <= 1'b0;
-
             watchdog_clear <= 1'b1;
-
         end
         else begin
 
             // defaults
             i2c_write <= 1'b0;
-
             watchdog_clear <= 1'b0;
-
             // inactive
             if (enb) begin
-
                 state <= WAIT_TIMEOUT;
-
-                pga_state <= 3'b000;
-
-                i2c_data <= 8'h00;
-
+                i2c_data <= 16'h0000;
                 watchdog_clear <= 1'b1;
-
             end
             
             else begin
@@ -151,16 +133,13 @@ module prog_gain_controller (
                     // Wait for watchdog expiration
                     // ============================================
                     WAIT_TIMEOUT: begin
-
                         if (watchdog_expired) begin
-
-                            pga_state <= pga_next;
-
                             i2c_data <= {
-                                5'b00000,
-                                pga_next
+                                7'b000_0000, // Bits [15:9] : Zero padding (7 bits)
+                                lna_gain,    // Bits [8:6]  : 3rd 3b field (LNA gain again)
+                                pga_gain,    // Bits [5:3]  : 2nd 3b field (PGA gain)
+                                lna_gain     // Bits [2:0]  : 1st 3b field (LNA gain)
                             };
-
                             state <= START_I2C;
                         end
                     end
@@ -169,9 +148,7 @@ module prog_gain_controller (
                     // Start serializer
                     // ============================================
                     START_I2C: begin
-
                         i2c_write <= 1'b1;
-
                         state <= WAIT_BUSY_HIGH;
                     end
 
@@ -179,23 +156,17 @@ module prog_gain_controller (
                     // Wait busy asserted
                     // ============================================
                     WAIT_BUSY_HIGH: begin
-
                         if (i2c_busy)
                             state <= WAIT_BUSY_LOW;
-
                     end
 
                     // ============================================
                     // Wait serialization complete
                     // ============================================
                     WAIT_BUSY_LOW: begin
-
                         if (!i2c_busy) begin
-
                             watchdog_clear <= 1'b1;
-
                             state <= WAIT_TIMEOUT;
-
                         end
                     end
 
