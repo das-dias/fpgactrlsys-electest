@@ -15,6 +15,8 @@ Address map (mirrors FPGA toplevel localparam):
   0x04  WATCHDOG_PROGRAM    data = watchdog_max (number of PGA cycles)
   0x05  EXPERIMENT_PROG     data = experiment duration in µs (8-bit)
   0x06  TOGGLE_PROG         data = toggle period in µs (8-bit)
+  0x07  LNA_PROG            data = lna programmable gain (3 bits)
+  0x08  PGA_PROG            data = pga programmable gain (3 bits)
 """
 
 from __future__ import annotations
