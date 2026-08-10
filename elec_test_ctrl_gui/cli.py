@@ -328,8 +328,8 @@ def handle_program(args: list[str], backend: FPGABackendLink) -> None:
         "watchdog":    backend.program_watchdog,
         "duration":    backend.program_experiment_duration,
         "toggle":      backend.program_toggle_period,
-        "lna_gain":      backend.program_lna_gain,
-        "pga_gain":      backend.program_pga_gain,
+        "lna_gain":    backend.program_lna_gain,
+        "pga_gain":    backend.program_pga_gain,
     }
 
     if args:
@@ -385,8 +385,8 @@ ALL_COMMANDS = [
     "status", "log", "help", "exit", "quit",
 ]
 
-SET_ARGS   = ["prbs_cross", "prbs_enable", "watchdog", "duration", "toggle"]
-PROG_ARGS  = ["prbs_cross", "prbs_enable", "watchdog", "duration", "toggle"]
+SET_ARGS   = ["prbs_cross", "prbs_enable", "watchdog", "duration", "toggle", "lna_gain"]
+PROG_ARGS  = ["prbs_cross", "prbs_enable", "watchdog", "duration", "toggle", "pga_gain"]
 
 COMPLETER = WordCompleter(
     ALL_COMMANDS + SET_ARGS + PROG_ARGS,
