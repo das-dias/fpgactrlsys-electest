@@ -7,7 +7,9 @@ module address_decoder #(
     output logic prbs_lfsr_enable_we,
     output logic watchdog_pga_controller_we,
     output logic experiment_duration_we,
-    output logic toggle_period_we
+    output logic toggle_period_we,
+    output logic lna_gain_we,
+    output logic pga_gain_we
 );
 
     // ============================================================
@@ -31,27 +33,37 @@ module address_decoder #(
         watchdog_pga_controller_we = 1'b0;
         experiment_duration_we     = 1'b0;
         toggle_period_we           = 1'b0;
+        lna_gain_we                = 1'b0;
+        pga_gain_we                = 1'b0;
 
         case (addr)
 
-            8'h01: begin
+            8'h02: begin
                 prbs_lfsr_cross_we = 1'b1;
             end
 
-            8'h02: begin
+            8'h03: begin
                 prbs_lfsr_enable_we = 1'b1;
             end
 
-            8'h03: begin
+            8'h04: begin
                 watchdog_pga_controller_we = 1'b1;
             end
 
-            8'h04: begin
+            8'h05: begin
                 experiment_duration_we = 1'b1;
             end
 
-            8'h05: begin
+            8'h06: begin
                 toggle_period_we = 1'b1;
+            end
+            
+            8'h07: begin
+                lna_gain_we = 1'b1;
+            end
+
+            8'h08: begin
+                pga_gain_we = 1'b1;
             end
 
             default: begin
