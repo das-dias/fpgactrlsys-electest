@@ -94,10 +94,12 @@ HELP_TEXT = """
   [bold]set watchdog[/bold]      <dec>      — Set watchdog max              (0–255)
   [bold]set duration[/bold]      <dec>      — Set experiment duration (µs)  (0–255)
   [bold]set toggle[/bold]        <dec>      — Set RX/TX toggle period (µs)  (0–255)
+  [bold]set lna_gain[/bold]      <dec>      — Set LNA Gain  (0b000, 0b100, 0b010, 0b110, 0b111)
+  [bold]set pga_gain[/bold]      <dec>      — Set PGA Gain  (0b000, 0b100, 0b010, 0b110, 0b111)
 
   [bold]program[/bold]                      — Push ALL registers to FPGA
   [bold]program[/bold] <reg>                — Push a single register (prbs_cross | prbs_enable |
-                                            watchdog | duration | toggle)
+                                            watchdog | duration | toggle | lna_gain | pga_gain)
 
   [bold]run[/bold]                          — Start experiment  (RUN_EXPERIMENT 0x00)
   [bold]stop[/bold]                         — Stop  experiment  (RUN_EXPERIMENT 0x01)
@@ -172,6 +174,8 @@ def _build_status_panel(backend: FPGABackendLink) -> Panel:
     reg_table.add_row("Watchdog Max",             f"{cfg.watchdog_max} (0x{cfg.watchdog_max:02X})", "0x04")
     reg_table.add_row("Experiment Duration (µs)", f"{cfg.experiment_duration_us}",      "0x05")
     reg_table.add_row("Toggle Period (µs)",       f"{cfg.toggle_period_us}",            "0x06")
+    reg_table.add_row("LNA Gain ",                f"{cfg.lna_gain}",            "0x07")
+    reg_table.add_row("PGA Gain ",                f"{cfg.pga_gain}",            "0x08")
 
     content = Text.assemble(
         (conn_text + "\n\n", ""),
@@ -301,6 +305,8 @@ def handle_set(args: list[str], backend: FPGABackendLink) -> None:
         "watchdog":    ("watchdog_max",            "Watchdog Max"),
         "duration":    ("experiment_duration_us",  "Experiment Duration (µs)"),
         "toggle":      ("toggle_period_us",        "Toggle Period (µs)"),
+        "lna_gain":      ("lna_gain",        "LNA Gain"),
+        "pga_gain":      ("pga_gain",        "PGA Gain"),
     }
     if reg not in MAP:
         _err(f"Unknown register: {reg!r}. Valid: {', '.join(MAP)}")
@@ -322,6 +328,8 @@ def handle_program(args: list[str], backend: FPGABackendLink) -> None:
         "watchdog":    backend.program_watchdog,
         "duration":    backend.program_experiment_duration,
         "toggle":      backend.program_toggle_period,
+        "lna_gain":      backend.program_lna_gain,
+        "pga_gain":      backend.program_pga_gain,
     }
 
     if args:
