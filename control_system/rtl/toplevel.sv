@@ -45,6 +45,9 @@ module toplevel (
     localparam logic [7:0] WATCHDOG_PROGRAM_ADDR    = 8'h04;
     localparam logic [7:0] EXPERIMENT_PROG_ADDR     = 8'h05;
     localparam logic [7:0] TOGGLE_PROG_ADDR         = 8'h06;
+    localparam logic [7:0] LNA_GAIN_PROG            = 8'h07;
+    localparam logic [7:0] PGA_GAIN_PROG            = 8'h08;
+    
 
     // ============================================================
     // New UART RX IP Instantiation
@@ -93,6 +96,8 @@ module toplevel (
     logic watchdog_pga_controller_we;
     logic experiment_duration_we;
     logic toggle_period_we;
+    logic lna_gain_we;
+    logic pga_gain_we;
 
     // ============================================================
     // Experiment enable register (Active-low enable)
@@ -108,7 +113,9 @@ module toplevel (
         .prbs_lfsr_enable_we         (prbs_lfsr_enable_we),
         .watchdog_pga_controller_we  (watchdog_pga_controller_we),
         .experiment_duration_we      (experiment_duration_we),
-        .toggle_period_we            (toggle_period_we)
+        .toggle_period_we            (toggle_period_we),
+        .lna_gain_we                 (lna_gain_we),
+        .pga_gain_we                 (pga_gain_we)
     );
 
     // Clock Testing Pins
