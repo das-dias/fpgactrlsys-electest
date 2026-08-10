@@ -221,7 +221,7 @@ module toplevel (
         .we            (watchdog_pga_controller_we),
         .lna_gain_we   (lna_gain_we),
         .pga_gain_we   (pga_gain_we),
-        .watchdog_max  (shared_data_bus),
+        .watchdog_data  (shared_data_bus),
         .i2c_cse_n     (i2c_cse_n),
         .i2c_sda       (i2c_sda),
         .i2c_scl       (i2c_scl)
