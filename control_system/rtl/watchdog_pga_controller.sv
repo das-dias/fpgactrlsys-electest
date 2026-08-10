@@ -6,7 +6,9 @@ module watchdog_pga_controller (
 
     // Watchdog programming interface
     input  logic       we,
-    input  logic [7:0] watchdog_max,
+    input  logic       lna_gain_we,
+    input  logic       pga_gain_we,
+    input  logic [7:0] watchdog_data,
 
     // I2C interface
     output logic       i2c_cse_n,
@@ -29,7 +31,7 @@ module watchdog_pga_controller (
     logic [2:0] pga_state;
     logic [2:0] pga_next;
 
-    logic [7:0] i2c_data;
+    logic [15:0] i2c_data;
 
     // ============================================================
     // I2C serializer signals
@@ -63,7 +65,7 @@ module watchdog_pga_controller (
     // ============================================================
 
     i2cmaster #(
-        .WIDTH(8)
+        .WIDTH(16)
     ) i2c0 (
         .clk       (clk),
         .rstb     (rstb),
