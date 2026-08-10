@@ -81,23 +81,18 @@ module prog_gain_controller (
         .i2c_scl   (i2c_scl)
     );
 
-    // ============================================================
-    // PGA sequence
-    // 000 -> 001 -> 010 -> 011 -> 111 -> 000
-    // ============================================================
-
-    always_comb begin
-
-        case (pga_state)
-
-            3'b000: pga_next = 3'b001;
-            3'b001: pga_next = 3'b010;
-            3'b010: pga_next = 3'b011;
-            3'b011: pga_next = 3'b111;
-
-            default: pga_next = 3'b000;
-
-        endcase
+    always_latch begin
+        if (!rstb) begin
+            lna_gain = 3'b111;         // Asynchronously clear the latch
+            pga_gain = 3'b111;        
+        end 
+        else if (lna_gain_we) begin
+            lna_gain = watchdog_data[2:0];   
+        end
+        else if (pga_gain_we) begin
+            pga_gain = watchdog_data[2:0];   
+        end
+        // When 'we' is low, the latch automatically holds its previous value
     end
 
     // ============================================================
@@ -147,6 +142,7 @@ module prog_gain_controller (
                 watchdog_clear <= 1'b1;
 
             end
+            
             else begin
 
                 case (state)
