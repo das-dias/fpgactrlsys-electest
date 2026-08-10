@@ -134,12 +134,12 @@ module prog_gain_controller (
                     // ============================================
                     WAIT_TIMEOUT: begin
                         if (watchdog_expired) begin
-                            i2c_data <= {
-                                7'b000_0000, // Bits [15:9] : Zero padding (7 bits)
-                                lna_gain,    // Bits [8:6]  : 3rd 3b field (LNA gain again)
-                                pga_gain,    // Bits [5:3]  : 2nd 3b field (PGA gain)
-                                lna_gain     // Bits [2:0]  : 1st 3b field (LNA gain)
-                            };
+                            i2c_data <= {<<{ // Pack and reverse register
+                                7'b000_0000, // Padding (7 bits)
+                                lna_gain,    // 3rd field
+                                pga_gain,    // 2nd field
+                                lna_gain     // 1st field
+                            }};
                             state <= START_I2C;
                         end
                     end
