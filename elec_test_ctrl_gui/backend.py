@@ -38,6 +38,8 @@ ADDR_PRBS_ENABLE      = 0x03
 ADDR_WATCHDOG_PROGRAM = 0x04
 ADDR_EXPERIMENT_PROG  = 0x05
 ADDR_TOGGLE_PROG      = 0x06
+ADDR_LNA_PROG        = 0x07
+ADDR_PGA_PROG        = 0x08
 
 
 # ---------------------------------------------------------------------------
@@ -52,6 +54,8 @@ class FPGABackendLinkConfig:
     watchdog_max:          int = 0xFF   # watchdog / PGA cycle count
     experiment_duration_us: int = 100  # experiment duration in µs  (0–255)
     toggle_period_us:      int = 10    # RX/TX toggle period in µs  (0–255)
+    lna_gain:              int = 0b111 # gain of the test and main AFE-LNA gain
+    pga_gain:              int = 0b111 # gain of the AFE-PGA
 
 
 @dataclass
@@ -213,6 +217,18 @@ class FPGABackendLink:
             self.config.toggle_period_us = period_us & 0xFF
         return self._send_packet(ADDR_TOGGLE_PROG, self.config.toggle_period_us)
 
+    def program_lna_gain(self, lna_gain: Optional[int] = None) -> bool:
+        """Write LNA gain control word."""
+        if lna_gain is not None:
+            self.config.lna_gain = lna_gain & 0x07 # & 0b111
+        return self._send_packet(ADDR_LNA_GAIN, self.config.lna_gain)
+      
+    def program_pga_gain(self, pga_gain: Optional[int] = None) -> bool:
+        """Write LNA gain control word."""
+        if pga_gain is not None:
+            self.config.pga_gain = pga_gain & 0x07 # & 0b111
+        return self._send_packet(ADDR_PGA_GAIN, self.config.pga_gain)
+    
     def program_all(self) -> dict[str, bool]:
         """
         Push the entire FPGABackendLinkConfig to the device in one shot.
@@ -224,6 +240,8 @@ class FPGABackendLink:
         results["watchdog"]             = self.program_watchdog()
         results["experiment_duration"]  = self.program_experiment_duration()
         results["toggle_period"]        = self.program_toggle_period()
+        results["lna_gain"]              = self.program_lna_gain()
+        results["pga_gain"]              = self.program_pga_gain()
         return results
 
     # ------------------------------------------------------------------
@@ -249,4 +267,6 @@ def _addr_label(addr: int) -> str:
         ADDR_WATCHDOG_PROGRAM: "WATCHDOG_PROGRAM",
         ADDR_EXPERIMENT_PROG:  "EXPERIMENT_PROG",
         ADDR_TOGGLE_PROG:      "TOGGLE_PROG",
+        ADDR_LNA_PROG:         "LNA_GAIN_PROG"
+        ADDR_PGA_PROG:         "PGA_GAIN_PROG"
     }.get(addr, f"UNKNOWN(0x{addr:02X})")
