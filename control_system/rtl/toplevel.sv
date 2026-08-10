@@ -189,6 +189,7 @@ module toplevel (
     // ============================================================
     // PRBS generators
     // ============================================================
+    /*
     prbs_lfsr prbs_cross (
         .enb    (experiment_enb),
         .clk    (clk),
@@ -206,6 +207,9 @@ module toplevel (
         .d_seed (shared_data_bus),
         .s_out  (prbs_enable_out)
     );
+    */
+    assign prbs_cross_out = testen_toggle_sw;
+    assign prbs_enable_out = testen_toggle_sw; 
 
     // ============================================================
     // Watchdog PGA controller
