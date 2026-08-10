@@ -269,6 +269,6 @@ def _addr_label(addr: int) -> str:
         ADDR_WATCHDOG_PROGRAM: "WATCHDOG_PROGRAM",
         ADDR_EXPERIMENT_PROG:  "EXPERIMENT_PROG",
         ADDR_TOGGLE_PROG:      "TOGGLE_PROG",
-        ADDR_LNA_PROG:         "LNA_GAIN_PROG"
+        ADDR_LNA_PROG:         "LNA_GAIN_PROG",
         ADDR_PGA_PROG:         "PGA_GAIN_PROG"
     }.get(addr, f"UNKNOWN(0x{addr:02X})")
