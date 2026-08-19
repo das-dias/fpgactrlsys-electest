@@ -1,5 +1,4 @@
 module prog_gain_controller (
-
     input  logic       clk,
     input  logic       rstb,
     input  logic       enb,
@@ -19,7 +18,6 @@ module prog_gain_controller (
     // ============================================================
     // Watchdog signals
     // ============================================================
-
     logic [7:0] watchdog_count;
     logic       watchdog_expired;
     logic       watchdog_clear;
@@ -27,48 +25,70 @@ module prog_gain_controller (
     // ============================================================
     // PGA control
     // ============================================================
-
-    logic [2:0] lna_gain;
-    logic [2:0] pga_gain;
-
+    logic [3:0]  gain_index; // 4-bit index to cover 10 gain entries (0-9)
     logic [15:0] i2c_data;
 
     // ============================================================
     // I2C serializer signals
     // ============================================================
-
     logic i2c_write;
     logic i2c_busy;
+
+    // Constant ROM lookup for 10 PGA gain words (16-bit wide)
+    localparam logic [15:0] I2C_ROM [0:9] = '{
+        16'h0000, // Index 0
+        16'h0001, // Index 1
+        16'h0002, // Index 2
+        16'h0003, // Index 3
+        16'h0007, // Index 4
+        16'h000F, // Index 5
+        16'h0017, // Index 6
+        16'h001F, // Index 7
+        16'h003F, // Index 8
+        16'h007F  // Index 9
+    };
+
+    // Synchronous gain index capture (replaces ASIC-unfriendly latch)
+    always_ff @(posedge clk or negedge rstb) begin
+        if (!rstb) begin
+            gain_index <= 4'b0000;
+        end else if (pga_gain_we) begin
+            // Bound index to valid array range (0-9)
+            if (watchdog_data[3:0] < 4'd10) begin
+                gain_index <= watchdog_data[3:0];
+            end else begin
+                gain_index <= 4'b0000;
+            end
+        end
+    end
 
     // ============================================================
     // Watchdog counter
     // ============================================================
-
     us_programmable_counter #(
         .COUNTER_WIDTH(8)
     ) watchdog_counter (
-        .clk        (clk),
-        .rstb      (rstb),
-
-        .enable     (!enb),
-        .clear      (watchdog_clear),
-
-        .we         (we),
-        .max_value  (watchdog_data),
-
-        .count      (watchdog_count),
-        .overflow_flag   (watchdog_expired)
+        .clk           (clk),
+        .rstb          (rstb),
+        .enable        (!enb),
+        .clear         (watchdog_clear),
+        .we            (we),
+        .max_value     (watchdog_data),
+        .count         (watchdog_count),
+        .overflow_flag (watchdog_expired)
     );
 
     // ============================================================
     // I2C serializer
     // ============================================================
-
     i2cmaster #(
-        .WIDTH(16)
+        .REFERENCE_CLK_FREQ (100_000_000),
+        .OPERATING_SCL_FREQ (5_000_000),
+        .WIDTH              (16),
+        .LSB_FIRST          (1'b1)
     ) i2c0 (
         .clk       (clk),
-        .rstb     (rstb),
+        .rstb      (rstb),
         .write     (i2c_write),
         .d_in      (i2c_data),
         .busy      (i2c_busy),
@@ -77,24 +97,9 @@ module prog_gain_controller (
         .i2c_scl   (i2c_scl)
     );
 
-    always_latch begin
-        if (!rstb) begin
-            lna_gain = 3'b111;         // Asynchronously clear the latch
-            pga_gain = 3'b111;        
-        end 
-        else if (lna_gain_we) begin
-            lna_gain = watchdog_data[2:0];   
-        end
-        else if (pga_gain_we) begin
-            pga_gain = watchdog_data[2:0];   
-        end
-        // When 'we' is low, the latch automatically holds its previous value
-    end
-
     // ============================================================
     // FSM
     // ============================================================
-
     typedef enum logic [1:0] {
         WAIT_TIMEOUT,
         START_I2C,
@@ -105,75 +110,49 @@ module prog_gain_controller (
     state_t state;
 
     always_ff @(posedge clk or negedge rstb) begin
-
         if (!rstb) begin
-
-            state <= WAIT_TIMEOUT;
-            i2c_data <= 8'h00;
-            i2c_write <= 1'b0;
+            state          <= WAIT_TIMEOUT;
+            i2c_data       <= 16'h0000;
+            i2c_write      <= 1'b0;
             watchdog_clear <= 1'b1;
-        end
-        else begin
-
-            // defaults
-            i2c_write <= 1'b0;
+        end else begin
+            // Default pulse outputs
+            i2c_write      <= 1'b0;
             watchdog_clear <= 1'b0;
-            // inactive
+
             if (enb) begin
-                state <= WAIT_TIMEOUT;
-                i2c_data <= 16'h0000;
+                state          <= WAIT_TIMEOUT;
+                i2c_data       <= 16'h0000;
                 watchdog_clear <= 1'b1;
-            end
-            
-            else begin
-
+            end else begin
                 case (state)
-
-                    // ============================================
-                    // Wait for watchdog expiration
-                    // ============================================
                     WAIT_TIMEOUT: begin
                         if (watchdog_expired) begin
-                            i2c_data <= {<<{ // Pack and reverse register
-                                7'b000_0000, // Padding (7 bits)
-                                lna_gain,    // 3rd field
-                                pga_gain,    // 2nd field
-                                lna_gain     // 1st field
-                            }};
-                            state <= START_I2C;
+                            i2c_data <= I2C_ROM[gain_index];
+                            state    <= START_I2C;
                         end
                     end
 
-                    // ============================================
-                    // Start serializer
-                    // ============================================
                     START_I2C: begin
                         i2c_write <= 1'b1;
-                        state <= WAIT_BUSY_HIGH;
+                        state     <= WAIT_BUSY_HIGH;
                     end
 
-                    // ============================================
-                    // Wait busy asserted
-                    // ============================================
                     WAIT_BUSY_HIGH: begin
                         if (i2c_busy)
                             state <= WAIT_BUSY_LOW;
                     end
 
-                    // ============================================
-                    // Wait serialization complete
-                    // ============================================
                     WAIT_BUSY_LOW: begin
                         if (!i2c_busy) begin
                             watchdog_clear <= 1'b1;
-                            state <= WAIT_TIMEOUT;
+                            state          <= WAIT_TIMEOUT;
                         end
                     end
 
                     default: begin
                         state <= WAIT_TIMEOUT;
                     end
-
                 endcase
             end
         end
