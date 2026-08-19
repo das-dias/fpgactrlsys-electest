@@ -1,7 +1,8 @@
 module i2cmaster #(
     parameter int REFERENCE_CLK_FREQ = 100_000_000, // Default 100 MHz
     parameter int OPERATING_SCL_FREQ = 5_000_000,   // Default 5 MHz
-    parameter int WIDTH              = 16          // Default 16 bits
+    parameter int WIDTH              = 16,          // Default 16 bits,
+    parameter bit LSB_FIRST          = 1'b1        // LSB-first = 1, MSB-first = 0
 )(
     input  logic                 clk,
     input  logic                 rstb,
@@ -84,7 +85,11 @@ module i2cmaster #(
                     // On SCL falling edge (scl_reg transitioning 1 -> 0)
                     // Shift out next data bit after the initial PRE-cycle
                     if (tick_cnt > 2 && tick_cnt <= (2 * WIDTH + 1)) begin
-                        shift_reg <= shift_reg << 1;
+                        if (LSB_FIRST) begin
+                            shift_reg <= shift_reg >> 1; // Right-shift for LSB-first
+                        end else begin
+                            shift_reg <= shift_reg << 1; // Left-shift for MSB-first
+                        end
                     end
                 end
             end
@@ -97,6 +102,6 @@ module i2cmaster #(
     assign busy      = busy_reg;
     assign i2c_cse_n = cse_n_reg;
     assign i2c_scl   = scl_reg;
-    assign i2c_sda   = shift_reg[WIDTH-1]; // MSB-first transmission
+    assign i2c_sda   = LSB_FIRST ? shift_reg[0] : shift_reg[WIDTH-1];
 
 endmodule
