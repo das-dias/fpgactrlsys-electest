@@ -18,18 +18,12 @@ module i2cmaster #(
     // ------------------------------------------------------------
     // Clock Divider Parameters & Local Parameters
     // ------------------------------------------------------------
-    // Calculate system clock cycles per SCL half-period
     localparam int DIV_HALF = REFERENCE_CLK_FREQ / (2 * OPERATING_SCL_FREQ);
     localparam int DIV_W    = (DIV_HALF > 1) ? $clog2(DIV_HALF) : 1;
-
-    // Total SCL ticks (half-cycles):
-    // 2 ticks for PRE cycle (1 rising edge before data)
-    // 2 * WIDTH ticks for DATA cycles
-    // 2 ticks for POST cycle (1 rising edge after data)
+    
     localparam int TOTAL_TICKS = (2 * WIDTH) + 4;
     localparam int TICK_W      = $clog2(TOTAL_TICKS + 1);
 
-    // Internal Registers
     logic [DIV_W-1:0]    clk_cnt;
     logic [TICK_W-1:0]   tick_cnt;
     logic [WIDTH-1:0]    shift_reg;
