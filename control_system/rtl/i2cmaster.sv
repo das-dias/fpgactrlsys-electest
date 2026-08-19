@@ -79,7 +79,7 @@ module i2cmaster #(
                 if (tick_cnt == TOTAL_TICKS - 1) begin
                     // Complete post-data cycle and reset
                     busy_reg  <= 1'b0;
-                    cse_n_reg <= 1 me1; // Deactivate CSE 1 SCL rising edge after data
+                    cse_n_reg <= 1'b1; // Deactivate CSE 1 SCL rising edge after data
                     scl_reg   <= 1'b1;
                 end else if (scl_reg == 1'b1) begin
                     // On SCL falling edge (scl_reg transitioning 1 -> 0)
