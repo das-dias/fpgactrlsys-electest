@@ -107,15 +107,19 @@ module toplevel (
     // ============================================================
     // Address decoder
     // ============================================================
+    logic write_strobe;
+    assign write_strobe = uart_valid && (uart_state == WAIT_DATA);
+
     address_decoder decoder0 (
-        .addr                        (addr_reg),
-        .prbs_lfsr_cross_we          (prbs_lfsr_cross_we),
-        .prbs_lfsr_enable_we         (prbs_lfsr_enable_we),
-        .watchdog_pga_controller_we  (watchdog_pga_controller_we),
-        .experiment_duration_we      (experiment_duration_we),
-        .toggle_period_we            (toggle_period_we),
-        .lna_gain_we                 (lna_gain_we),
-        .pga_gain_we                 (pga_gain_we)
+        .write_strobe               (write_strobe),
+        .addr                       (addr_reg),
+        .prbs_lfsr_cross_we         (prbs_lfsr_cross_we),
+        .prbs_lfsr_enable_we        (prbs_lfsr_enable_we),
+        .watchdog_pga_controller_we (watchdog_pga_controller_we),
+        .experiment_duration_we     (experiment_duration_we),
+        .toggle_period_we           (toggle_period_we),
+        .lna_gain_we                (lna_gain_we),
+        .pga_gain_we                (pga_gain_we)
     );
 
     // Clock Testing Pins
