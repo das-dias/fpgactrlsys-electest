@@ -28,7 +28,7 @@ module i2cmaster #(
 
     // Internal Registers
     logic [DIV_W-1:0]  clk_cnt;
-    logic [TICK_W-1:0] tick_cnt;
+    logic [TICK_W:0] tick_cnt;
     logic [WIDTH-1:0]  shift_reg;
     logic              scl_reg;
     logic              busy_reg;
@@ -73,8 +73,9 @@ module i2cmaster #(
             end else if (scl_tick) begin
                 if (tick_cnt == TOTAL_TICKS - 1) begin
                     // Transmission complete after exactly WIDTH SCL cycles (16 clocks)
-                    busy_reg  <= 1'b0;
                     scl_reg   <= 1'b1;
+                end else if (tick_cnt == TOTAL_TICKS) begin
+                    busy_reg  <= 1'b0;
                     tick_cnt  <= '0;
                 end else begin
                     scl_reg  <= ~scl_reg;
