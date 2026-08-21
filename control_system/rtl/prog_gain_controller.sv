@@ -1,7 +1,7 @@
 module prog_gain_controller (
     input  logic       clk,
     input  logic       rstb,
-    input  logic       enb,         // Active-high disable (set to 0 for normal operation)
+    input  logic       enb,          // Active-high disable (0 for normal operation)
 
     // Gain programming interface
     input  logic       pga_gain_we,
@@ -27,6 +27,7 @@ module prog_gain_controller (
         end
     end
 
+    // High for exactly 1 clock cycle on rising edge of pga_gain_we
     assign pga_gain_pe = pga_gain_we && !pga_gain_we_d;
 
     // ============================================================
@@ -47,6 +48,9 @@ module prog_gain_controller (
         16'h003F, // Index 8
         16'h007F  // Index 9
     };
+
+    // Combinational ROM output: i2c_data updates instantly when gain_index changes
+    assign i2c_data = I2C_ROM[gain_index];
 
     // ============================================================
     // I2C Serializer
@@ -86,31 +90,23 @@ module prog_gain_controller (
         if (!rstb) begin
             state      <= IDLE;
             gain_index <= 4'd0;
-            i2c_data   <= 16'h0000;
             i2c_write  <= 1'b0;
         end else if (enb) begin
             state      <= IDLE;
-            i2c_data   <= 16'h0000;
             i2c_write  <= 1'b0;
         end else begin
             i2c_write <= 1'b0; // Default pulse output
 
             case (state)
                 IDLE: begin
+                    // Trigger strictly on the rising edge of write-enable
                     if (pga_gain_pe) begin
-                        // Latch valid index (0-9)
-                        if (gain_data[3:0] < 4'd10) begin
-                            gain_index <= gain_data[3:0];
-                        end else begin
-                            gain_index <= 4'd0;
-                        end
-                        state <= START_I2C;
+                        gain_index <= (gain_data[3:0] < 4'd10) ? gain_data[3:0] : 4'd0;
+                        state      <= START_I2C;
                     end
                 end
 
                 START_I2C: begin
-                    // Read ROM using updated gain_index
-                    i2c_data  <= I2C_ROM[gain_index];
                     i2c_write <= 1'b1;
                     state     <= WAIT_BUSY_HIGH;
                 end
