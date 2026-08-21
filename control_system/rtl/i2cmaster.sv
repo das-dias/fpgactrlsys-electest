@@ -28,7 +28,8 @@ module i2cmaster #(
 
     // Internal Registers
     logic [DIV_W-1:0]  clk_cnt;
-    logic [TICK_W:0] tick_cnt;
+    logic [TICK_W-1:0] tick_cnt;
+    logic [TICK_W-1:0] tick_cnt_prev;
     logic [WIDTH-1:0]  shift_reg;
     logic              scl_reg;
     logic              busy_reg;
@@ -38,7 +39,8 @@ module i2cmaster #(
     // ------------------------------------------------------------
     logic scl_tick;
     assign scl_tick = (clk_cnt == DIV_HALF - 1);
-
+    
+    
     always_ff @(posedge clk or negedge rstb) begin
         if (!rstb) begin
             clk_cnt <= '0;
@@ -68,17 +70,21 @@ module i2cmaster #(
                     busy_reg  <= 1'b1;
                     shift_reg <= d_in;
                     tick_cnt  <= '0;
+                    tick_cnt_prev  <= '0;
                     scl_reg   <= 1'b1; // Hold SCL High during PRE setup
                 end
             end else if (scl_tick) begin
                 if (tick_cnt == TOTAL_TICKS - 1) begin
                     // Transmission complete after exactly WIDTH SCL cycles (16 clocks)
-                    scl_reg   <= 1'b1;
-                end else if (tick_cnt == TOTAL_TICKS) begin
-                    busy_reg  <= 1'b0;
-                    tick_cnt  <= '0;
+                    scl_reg         <= 1'b1;
+                    // busy_reg        <= 1'b0;
+                    tick_cnt_prev   <= TOTAL_TICKS - 1;
+                    tick_cnt        <= '0;
+                end else if (tick_cnt == 0 && tick_cnt_prev == TOTAL_TICKS - 1) begin 
+                    busy_reg        <= 1'b0;
                 end else begin
                     scl_reg  <= ~scl_reg;
+                    tick_cnt_prev <= tick_cnt;
                     tick_cnt <= tick_cnt + 1'b1;
 
                     // Shift data on SCL falling edge (scl_reg transitioning 1 -> 0)
