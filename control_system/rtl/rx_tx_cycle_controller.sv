@@ -6,8 +6,11 @@
     3. set rxstate high, cseb to low, to activate internal digital circuits
     4. set testen high if  testen_toggle_sw is High, set afeen if afeen_toggle_sw is High
     5. start microsecond counter
-    6. while microsecond counter didn't reach maximum programmable duration of experiment, 
-           every X (prog) microseconds toggle rxtxb, for a single 50MHz clock cycle
+    6. while microsecond counter didn't reach maximum programmable duration of experiment,
+           every X (prog) microseconds pulse rxtxb LOW for a single 50MHz clock cycle
+           (RXTXB is HIGH by default = RX mode; the one-cycle LOW pulse = TX mode).
+           If toggle_period_us == 0 or experiment_duration_us == 0, rxtxb is held
+           HIGH (RX mode) for the whole experiment and never pulses.
     7. when microsecond counter reaches maximum programmable duration of RX cycle, 
         turn all enable flags off to the default state, waiting for the next enb signal
     
@@ -284,11 +287,40 @@ module rx_tx_cycle_controller (
                     // ============================================
                     RUN_EXPERIMENT: begin
 
-                        // periodic RX/TX toggle
+                        // FIX A (bug): rxtxb previously did `rxtxb <= ~rxtxb`
+                        // on every toggle_event, which flips state and HOLDS
+                        // it -- producing a square wave, not the "single
+                        // 50MHz clock cycle" pulse the spec calls for. Now
+                        // rxtxb defaults HIGH every cycle and is only driven
+                        // LOW on the exact cycle toggle_event fires, so it
+                        // is a genuine one-cycle pulse.
+                        //
+                        // FIX B (bug): polarity was inverted. RXTXB HIGH =
+                        // RX mode (the default/resting state while the
+                        // experiment runs), RXTXB LOW = TX mode (the brief
+                        // pulse). This flows naturally from FIX A's default
+                        // now being HIGH and the pulse being LOW.
+                        //
+                        // FIX C (missing case): if toggle_period_us == 0 or
+                        // experiment_duration_us == 0, force RX mode
+                        // (rxtxb held HIGH) for the whole experiment and
+                        // suppress the TX pulse entirely, regardless of
+                        // what the toggle counter's overflow_flag does in
+                        // that degenerate configuration.
+                        if ((toggle_period_us == 8'd0) ||
+                            (experiment_duration_us == 8'd0)) begin
+                            rxtxb <= 1'b1;
+                        end
+                        else if (toggle_event) begin
+                            rxtxb <= 1'b0;
+                        end
+                        else begin
+                            rxtxb <= 1'b1;
+                        end
+
+                        // keep the toggle counter running/cleared regardless
+                        // of the zero-guard above, so it never gets stuck
                         if (toggle_event) begin
-
-                            rxtxb <= ~rxtxb;
-
                             toggle_clear <= 1'b1;
                         end
 
